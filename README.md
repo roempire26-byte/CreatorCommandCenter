@@ -4,8 +4,8 @@ Creator Command Center is a private, desktop-first workspace for running a strea
 
 ## Project status
 
-**Stage:** Sprint 4 complete — Analytics is now a real session timeline, platform summaries, goal progress, a date-range filter, and honest trend callouts, all built on Sprints 2-3's data  
-**Next milestone:** Sprint 5 — content pipeline and safe automations  
+**Stage:** Sprint 5 complete — Content is a real, editable queue and Automations runs a genuine (dry-run, read-only) "content review check" workflow with a full run history  
+**Next milestone:** Sprint 6 — optional AI workspace  
 **Primary user:** The project owner (with room to support other creators later)
 
 ## What version 1 will do
@@ -35,8 +35,8 @@ CreatorCommandCenter/
 │   ├── icons/
 │   └── inspiration/
 ├── app/                  # Desktop application source (Sprint 1+)
-├── backend/              # Activity log + OBS adapter, imported by app/src/main (Sprint 2+)
-├── automation/           # Reusable automation workflows (Sprint 3+)
+├── backend/              # Activity log, OBS adapter, automation runner — imported by app/src/main (Sprint 2+)
+├── automation/           # Pure workflow definitions, e.g. the content review check (Sprint 5+)
 ├── database/             # Schema, migrations, and repositories (Sprint 2+)
 └── README.md
 ```
@@ -51,6 +51,9 @@ Read these files in order before implementing further work:
 4. [Design System](docs/Design%20System.md)
 5. [Sprint 1](docs/Sprint%201.md)
 6. [Sprint 2](docs/Sprint%202.md)
+7. [Sprint 3](docs/Sprint%203.md)
+8. [Sprint 4](docs/Sprint%204.md)
+9. [Sprint 5](docs/Sprint%205.md)
 
 ### Run the app locally
 

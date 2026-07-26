@@ -62,7 +62,10 @@ export type CreateContentItemInput = z.infer<typeof createContentItemSchema>
 export const updateContentItemStatusSchema = z.object({ id: z.string(), status: contentItemStatusSchema })
 export type UpdateContentItemStatusInput = z.infer<typeof updateContentItemStatusSchema>
 
-export const contentItemSchema = createContentItemSchema.extend({ id: z.string() })
+export const contentItemSchema = createContentItemSchema.extend({
+  id: z.string(),
+  statusChangedAt: z.string().nullable()
+})
 export type ContentItem = z.infer<typeof contentItemSchema>
 
 export const activityLogEntrySchema = z.object({

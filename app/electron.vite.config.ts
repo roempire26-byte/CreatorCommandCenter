@@ -5,7 +5,8 @@ import react from '@vitejs/plugin-react'
 const sharedAliases = {
   '@shared': resolve('src/shared'),
   '@database': resolve('../database'),
-  '@backend': resolve('../backend')
+  '@backend': resolve('../backend'),
+  '@automation': resolve('../automation')
 }
 
 export default defineConfig({

@@ -11,6 +11,7 @@ interface ContentItemRow {
   title: string
   draft: string | null
   due_at: string | null
+  status_changed_at: string | null
 }
 
 function toContentItem(row: ContentItemRow): ContentItem {
@@ -21,7 +22,8 @@ function toContentItem(row: ContentItemRow): ContentItem {
     status: row.status as ContentItem['status'],
     title: row.title,
     draft: row.draft ?? undefined,
-    dueAt: row.due_at ?? undefined
+    dueAt: row.due_at ?? undefined,
+    statusChangedAt: row.status_changed_at
   }
 }
 
@@ -32,15 +34,16 @@ export function listContentItems(handle: DbHandle): ContentItem[] {
 
 export function createContentItem(handle: DbHandle, input: CreateContentItemInput): ContentItem {
   const id = randomUUID()
+  const statusChangedAt = new Date().toISOString()
   mutate(
     handle.db,
-    `INSERT INTO content_items (id, source_session_id, type, status, title, draft, due_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, input.sourceSessionId ?? null, input.type, input.status, input.title, input.draft ?? null, input.dueAt ?? null]
+    `INSERT INTO content_items (id, source_session_id, type, status, title, draft, due_at, status_changed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, input.sourceSessionId ?? null, input.type, input.status, input.title, input.draft ?? null, input.dueAt ?? null, statusChangedAt]
   )
   saveDatabase(handle)
 
-  return { id, ...input }
+  return { id, ...input, statusChangedAt }
 }
 
 export function getContentItem(handle: DbHandle, id: string): ContentItem | undefined {
@@ -52,8 +55,9 @@ export function updateContentItemStatus(handle: DbHandle, id: string, status: Co
   const existing = getContentItem(handle, id)
   if (!existing) return undefined
 
-  mutate(handle.db, 'UPDATE content_items SET status = ? WHERE id = ?', [status, id])
+  const statusChangedAt = new Date().toISOString()
+  mutate(handle.db, 'UPDATE content_items SET status = ?, status_changed_at = ? WHERE id = ?', [status, statusChangedAt, id])
   saveDatabase(handle)
 
-  return { ...existing, status }
+  return { ...existing, status, statusChangedAt }
 }

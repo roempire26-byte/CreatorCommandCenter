@@ -56,10 +56,15 @@ const obs = {
   }
 }
 
+const automation = {
+  runContentReviewCheck: (): Promise<AutomationRun> => ipcRenderer.invoke(IPC.automationRunContentReviewCheck)
+}
+
 const api = {
   appVersion: process.env.npm_package_version ?? '0.1.0',
   db,
-  obs
+  obs,
+  automation
 }
 
 contextBridge.exposeInMainWorld('commandCenter', api)

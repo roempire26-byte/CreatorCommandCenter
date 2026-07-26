@@ -16,6 +16,7 @@ export const IPC = {
   dbListMetricSnapshotsForSession: 'db:listMetricSnapshotsForSession',
   dbListMetricSnapshots: 'db:listMetricSnapshots',
   dbListAutomationRuns: 'db:listAutomationRuns',
+  automationRunContentReviewCheck: 'automation:runContentReviewCheck',
   obsGetStatus: 'obs:getStatus',
   obsStatusChanged: 'obs:status-changed',
   obsGetSettings: 'obs:getSettings',

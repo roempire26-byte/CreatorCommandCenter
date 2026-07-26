@@ -1,13 +1,14 @@
-# Creator Command Center — App (Sprint 4)
+# Creator Command Center — App (Sprint 5)
 
 Desktop application with navigation, the Cyberpunk Executive design system, seven
 routes, a Mission Control dashboard, a `Ctrl/Cmd + K` command palette (Sprint 1), local
 SQLite persistence, a read-only OBS WebSocket status adapter (Sprint 2), a pre-stream
 checklist, session start/end tracking, confirmed OBS start/stop stream actions, a
-post-stream briefing with manual metrics entry (Sprint 3), and a real Analytics screen —
+post-stream briefing with manual metrics entry (Sprint 3), a real Analytics screen —
 session timeline, platform summaries, goal progress, a date-range filter, and honest
-trend callouts (Sprint 4). No platform accounts, real automation, or AI calls are wired
-up yet — see [`docs/Sprint 4.md`](../docs/Sprint%204.md) for scope.
+trend callouts (Sprint 4) — and a real Content queue plus a genuine (dry-run, read-only)
+automation runner with one example workflow (Sprint 5). No platform accounts or AI calls
+are wired up yet — see [`docs/Sprint 5.md`](../docs/Sprint%205.md) for scope.
 
 ## Tooling
 
@@ -52,12 +53,13 @@ Run these from inside `app/`:
 ```text
 CreatorCommandCenter/
 ├── database/                  # Schema, migrations, sql.js helpers, per-entity repositories
-├── backend/                   # Activity-log entry point, OBS adapter — no `electron` imports
+├── backend/                   # Activity-log entry point, OBS adapter, automation runner — no `electron` imports
+├── automation/                 # Pure workflow definitions (e.g. workflows/content-review-check.ts) — no DB, no IPC
 └── app/
-    ├── electron.vite.config.ts   # Build config; @shared/@database/@backend aliases
+    ├── electron.vite.config.ts   # Build config; @shared/@database/@backend/@automation aliases
     ├── src/
     │   ├── main/                 # Electron main process: window, DB bootstrap, IPC handlers, OBS settings
-    │   ├── preload/               # contextBridge API: window.commandCenter.db.* / obs.*
+    │   ├── preload/               # contextBridge API: window.commandCenter.db.* / obs.* / automation.*
     │   ├── shared/                 # IPC channel names + Zod schemas, used by main/preload/renderer
     │   └── renderer/
     │       ├── index.html
@@ -70,10 +72,12 @@ CreatorCommandCenter/
     │           └── styles/         # Design tokens and global styles
 ```
 
-`database/` and `backend/` live outside `app/` per `docs/Architecture.md`'s layout, but
-are plain TypeScript imported directly by `app/src/main` (no separate process this
-sprint) — see `docs/Sprint 2.md` for why, and the constraint that keeps that option open
-later (no `electron` imports inside those two folders).
+`database/`, `backend/`, and `automation/` live outside `app/` per `docs/Architecture.md`'s
+layout, but are plain TypeScript imported directly by `app/src/main` (no separate process
+yet) — see `docs/Sprint 2.md` for why, and the constraint that keeps that option open
+later (no `electron` imports inside those folders). `automation/` specifically holds only
+pure workflow logic (inputs in, a result out, no side effects) — `backend/automation-runner.ts`
+is the orchestration layer that actually persists runs and logs activity.
 
 ## Local data
 
@@ -96,25 +100,36 @@ later (no `electron` imports inside those two folders).
    a connection, those buttons just track the session locally — no confirmation, since
    there's no external action to approve.
 
-## What's real vs. mock in Sprint 4
+## What's real vs. mock in Sprint 5
 
-- Stream sessions, goals, content items, checklist items, metric snapshots, and the
-  activity log are all real, persisted in SQLite. There is no seed data — an empty
-  database is the honest starting state.
+- Stream sessions, goals, content items, checklist items, metric snapshots, automation
+  runs, and the activity log are all real, persisted in SQLite. There is no seed data —
+  an empty database is the honest starting state.
 - OBS status, scene name, and streaming/recording flags are live when OBS's WebSocket
   server is reachable. Starting/ending a session on the Streaming screen calls OBS's real
   `StartStream`/`StopStream` requests when connected (behind a confirmation dialog); it
   never does anything beyond that (no scene switching, no source/recording control).
-- The post-stream briefing shown after ending a session reads real goals and real
-  content items — it does not compute a "change caused by this session," since nothing
-  in the data model ties a goal's progress to a specific session yet.
-- Analytics is entirely real-data-driven: the session timeline, platform summaries, and
-  trend callouts are all computed from stored `StreamSession`/`MetricSnapshot` rows —
-  nothing estimated or invented. Trend callouts explicitly refuse to compare against a
-  prior period the recorded history doesn't actually cover, showing a plain "not enough
-  history yet" message instead of a misleading number. There is still no real Twitch/
-  YouTube/TikTok API adapter — see `docs/Sprint 4.md`'s scope decision on why that's
-  deliberately excluded, not just deferred by omission.
+- Analytics is entirely real-data-driven — see the Sprint 4 notes below.
+- Content is a complete loop: items created there or from Mission Control persist
+  identically, and moving an item between statuses (including straight to "published",
+  to reflect posting it elsewhere) is real and logged.
+- The "Content review check" automation is real and genuinely runs — it reads
+  `ContentItem` rows, flags anything sitting in `ready-for-review` for 3+ days, and logs
+  a run every time, including an honest "nothing to flag" result. It never writes
+  anything back to a content item, never touches OBS, and never posts, deletes, or
+  spends money — there is no confirmation dialog for it because it does nothing that
+  needs one.
 - Command palette actions still just navigate; they don't trigger real automation.
-- Platform analytics API adapters, automation runs, and AI features remain untouched —
-  see `docs/Roadmap.md`.
+- Real platform API adapters (Twitch/YouTube/TikTok), scheduling/n8n integration, and AI
+  features remain untouched — see `docs/Roadmap.md`, `docs/Sprint 4.md`, and
+  `docs/Sprint 5.md` for the specific scope decisions behind each exclusion.
+
+### Sprint 4 notes (still accurate)
+
+The session timeline, platform summaries, and trend callouts are all computed from
+stored `StreamSession`/`MetricSnapshot` rows — nothing estimated or invented. Trend
+callouts explicitly refuse to compare against a prior period the recorded history
+doesn't actually cover, showing a plain "not enough history yet" message instead of a
+misleading number. The post-stream briefing shown after ending a session reads real
+goals and real content items — it does not compute a "change caused by this session,"
+since nothing in the data model ties a goal's progress to a specific session yet.

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Card } from '@renderer/components/Card'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
+import { buttonClassName } from '@renderer/components/Button'
 import { automationRunTone } from '@renderer/lib/statusTones'
 import { formatDateTime } from '@renderer/lib/format'
 import type { AutomationRun } from '@shared/schemas'
@@ -10,6 +11,7 @@ import styles from './Automations.module.css'
 export function Automations(): JSX.Element {
   const [runs, setRuns] = useState<AutomationRun[]>([])
   const [loading, setLoading] = useState(true)
+  const [running, setRunning] = useState(false)
 
   useEffect(() => {
     window.commandCenter.db.listAutomationRuns().then((result) => {
@@ -18,8 +20,31 @@ export function Automations(): JSX.Element {
     })
   }, [])
 
+  async function handleRun(): Promise<void> {
+    setRunning(true)
+    try {
+      const run = await window.commandCenter.automation.runContentReviewCheck()
+      setRuns((prev) => [run, ...prev])
+    } finally {
+      setRunning(false)
+    }
+  }
+
   return (
     <div className={styles.wrap}>
+      <Card
+        title="Content review check"
+        subtitle="Flags content items sitting in review for 3+ days — reads only, changes nothing"
+      >
+        <p className={styles.hint}>
+          Runs locally, right now, on demand. It never posts, deletes, or spends money — it only reads content items and
+          logs what it would flag for your attention.
+        </p>
+        <button type="button" className={buttonClassName('secondary')} onClick={handleRun} disabled={running}>
+          {running ? 'Running…' : 'Run now'}
+        </button>
+      </Card>
+
       <Card title="Automation runs" subtitle="Every run — status, timing, and result">
         {loading ? (
           <p className={styles.hint}>Loading…</p>
@@ -27,7 +52,7 @@ export function Automations(): JSX.Element {
           <EmptyState
             icon="◈"
             title="No automation runs yet"
-            description="Workflows run locally, always logged here, and never post, delete, or spend money without a separate confirmation."
+            description="Run the content review check above, or wait for a future workflow — every run leaves a record here, even when it finds nothing."
           />
         ) : (
           <div className={styles.runList}>
@@ -46,14 +71,6 @@ export function Automations(): JSX.Element {
             ))}
           </div>
         )}
-      </Card>
-
-      <Card title="What's coming" subtitle="Rest of Sprint 5">
-        <p className={styles.hint}>
-          A "Content review check" workflow you can run on demand — it scans content items sitting in review too long and
-          logs what it would flag, without changing anything. No workflow in this app posts, deletes, or spends money
-          without a separate, explicit confirmation.
-        </p>
       </Card>
     </div>
   )

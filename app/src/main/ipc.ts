@@ -22,6 +22,7 @@ import { createMetricSnapshot, listMetricSnapshots, listMetricSnapshotsForSessio
 import { listAutomationRuns } from '@database/repositories/automation-runs'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { logActivity } from '@backend/activity-log'
+import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
 
@@ -116,6 +117,8 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
   ipcMain.handle(IPC.dbListMetricSnapshots, () => listMetricSnapshots(dbHandle))
 
   ipcMain.handle(IPC.dbListAutomationRuns, () => listAutomationRuns(dbHandle))
+
+  ipcMain.handle(IPC.automationRunContentReviewCheck, () => runContentReviewCheckWorkflow(dbHandle))
 
   ipcMain.handle(IPC.dbListActivity, (_event, limit: unknown) => {
     const safeLimit = typeof limit === 'number' && Number.isFinite(limit) ? Math.min(Math.max(1, limit), 200) : undefined

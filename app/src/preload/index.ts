@@ -35,6 +35,7 @@ const db = {
     ipcRenderer.invoke(IPC.dbCreateMetricSnapshot, input),
   listMetricSnapshotsForSession: (sessionId: string): Promise<MetricSnapshot[]> =>
     ipcRenderer.invoke(IPC.dbListMetricSnapshotsForSession, { sessionId }),
+  listMetricSnapshots: (): Promise<MetricSnapshot[]> => ipcRenderer.invoke(IPC.dbListMetricSnapshots),
   listActivity: (limit?: number): Promise<ActivityLogEntry[]> => ipcRenderer.invoke(IPC.dbListActivity, limit)
 }
 

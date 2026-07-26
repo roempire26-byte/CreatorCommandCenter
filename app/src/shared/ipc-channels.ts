@@ -13,6 +13,7 @@ export const IPC = {
   dbDeleteChecklistItem: 'db:deleteChecklistItem',
   dbCreateMetricSnapshot: 'db:createMetricSnapshot',
   dbListMetricSnapshotsForSession: 'db:listMetricSnapshotsForSession',
+  dbListMetricSnapshots: 'db:listMetricSnapshots',
   obsGetStatus: 'obs:getStatus',
   obsStatusChanged: 'obs:status-changed',
   obsGetSettings: 'obs:getSettings',

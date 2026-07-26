@@ -32,6 +32,11 @@ export function listMetricSnapshotsForSession(handle: DbHandle, sessionId: strin
   return rows.map(toMetricSnapshot)
 }
 
+export function listMetricSnapshots(handle: DbHandle): MetricSnapshot[] {
+  const rows = query<MetricSnapshotRow>(handle.db, 'SELECT * FROM metric_snapshots ORDER BY captured_at DESC')
+  return rows.map(toMetricSnapshot)
+}
+
 export function createMetricSnapshot(handle: DbHandle, input: CreateMetricSnapshotInput): MetricSnapshot {
   const id = randomUUID()
   const capturedAt = new Date().toISOString()

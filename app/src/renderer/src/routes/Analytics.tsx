@@ -5,23 +5,29 @@ import { EmptyState } from '@renderer/components/EmptyState'
 import { DATE_RANGE_PRESETS, getDateRangeBounds, isWithinRange, type DateRangePreset } from '@renderer/lib/dateRange'
 import { formatDateTime, formatDuration } from '@renderer/lib/format'
 import { sessionTone } from '@renderer/lib/statusTones'
-import type { StreamSession } from '@shared/schemas'
+import { computePlatformSummaries } from '@renderer/lib/platformSummary'
+import type { MetricSnapshot, StreamSession } from '@shared/schemas'
 import styles from './Analytics.module.css'
 
 export function Analytics(): JSX.Element {
   const [sessions, setSessions] = useState<StreamSession[]>([])
+  const [metrics, setMetrics] = useState<MetricSnapshot[]>([])
   const [loading, setLoading] = useState(true)
   const [preset, setPreset] = useState<DateRangePreset>('30d')
 
   useEffect(() => {
-    window.commandCenter.db.listSessions().then((result) => {
-      setSessions(result)
-      setLoading(false)
-    })
+    Promise.all([window.commandCenter.db.listSessions(), window.commandCenter.db.listMetricSnapshots()]).then(
+      ([sessionsResult, metricsResult]) => {
+        setSessions(sessionsResult)
+        setMetrics(metricsResult)
+        setLoading(false)
+      }
+    )
   }, [])
 
   const bounds = useMemo(() => getDateRangeBounds(preset), [preset])
   const filtered = useMemo(() => sessions.filter((session) => isWithinRange(session.startedAt, bounds)), [sessions, bounds])
+  const platformSummaries = useMemo(() => computePlatformSummaries(filtered, metrics), [filtered, metrics])
 
   return (
     <div className={styles.wrap}>
@@ -37,6 +43,37 @@ export function Analytics(): JSX.Element {
           </button>
         ))}
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <Card title="Platform summary" subtitle="Sessions, hours, and recorded metrics in this range">
+          <div className={styles.platformGrid}>
+            {platformSummaries.map((summary) => (
+              <div className={styles.platformCard} key={summary.platform}>
+                <span className={styles.platformName}>{summary.platform}</span>
+                <div className={styles.platformStats}>
+                  <span>
+                    <span className={styles.platformStatValue}>{summary.sessionCount}</span> session
+                    {summary.sessionCount === 1 ? '' : 's'}
+                  </span>
+                  <span>
+                    <span className={styles.platformStatValue}>{summary.totalHours}</span> h
+                  </span>
+                </div>
+                {summary.metricTotals.length > 0 && (
+                  <div className={styles.platformMetricList}>
+                    {summary.metricTotals.map((metric) => (
+                      <div className={styles.platformMetricRow} key={metric.metricName}>
+                        <span>{metric.metricName}</span>
+                        <span>{metric.total}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card
         title="Session timeline"

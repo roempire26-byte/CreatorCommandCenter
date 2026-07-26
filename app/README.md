@@ -1,12 +1,13 @@
-# Creator Command Center — App (Sprint 3)
+# Creator Command Center — App (Sprint 4)
 
 Desktop application with navigation, the Cyberpunk Executive design system, seven
 routes, a Mission Control dashboard, a `Ctrl/Cmd + K` command palette (Sprint 1), local
 SQLite persistence, a read-only OBS WebSocket status adapter (Sprint 2), a pre-stream
-checklist, session start/end tracking, confirmed OBS start/stop stream actions, and a
-post-stream briefing with manual metrics entry (Sprint 3). No platform accounts, real
-automation, or AI calls are wired up yet — see
-[`docs/Sprint 3.md`](../docs/Sprint%203.md) for scope.
+checklist, session start/end tracking, confirmed OBS start/stop stream actions, a
+post-stream briefing with manual metrics entry (Sprint 3), and a real Analytics screen —
+session timeline, platform summaries, goal progress, a date-range filter, and honest
+trend callouts (Sprint 4). No platform accounts, real automation, or AI calls are wired
+up yet — see [`docs/Sprint 4.md`](../docs/Sprint%204.md) for scope.
 
 ## Tooling
 
@@ -95,7 +96,7 @@ later (no `electron` imports inside those two folders).
    a connection, those buttons just track the session locally — no confirmation, since
    there's no external action to approve.
 
-## What's real vs. mock in Sprint 3
+## What's real vs. mock in Sprint 4
 
 - Stream sessions, goals, content items, checklist items, metric snapshots, and the
   activity log are all real, persisted in SQLite. There is no seed data — an empty
@@ -107,6 +108,13 @@ later (no `electron` imports inside those two folders).
 - The post-stream briefing shown after ending a session reads real goals and real
   content items — it does not compute a "change caused by this session," since nothing
   in the data model ties a goal's progress to a specific session yet.
+- Analytics is entirely real-data-driven: the session timeline, platform summaries, and
+  trend callouts are all computed from stored `StreamSession`/`MetricSnapshot` rows —
+  nothing estimated or invented. Trend callouts explicitly refuse to compare against a
+  prior period the recorded history doesn't actually cover, showing a plain "not enough
+  history yet" message instead of a misleading number. There is still no real Twitch/
+  YouTube/TikTok API adapter — see `docs/Sprint 4.md`'s scope decision on why that's
+  deliberately excluded, not just deferred by omission.
 - Command palette actions still just navigate; they don't trigger real automation.
-- Platform analytics (Twitch/YouTube/TikTok), automation runs, and AI features remain
-  untouched — see `docs/Roadmap.md`.
+- Platform analytics API adapters, automation runs, and AI features remain untouched —
+  see `docs/Roadmap.md`.

@@ -86,6 +86,27 @@
   text-align: right;
 }
 
+.trendList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.trendRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.trendValue {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .goalsList {
   display: flex;
   flex-direction: column;

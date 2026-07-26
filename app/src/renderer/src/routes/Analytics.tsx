@@ -6,6 +6,7 @@ import { Meter } from '@renderer/components/Meter'
 import {
   DATE_RANGE_PRESETS,
   getDateRangeBounds,
+  getPriorRangeBounds,
   isWithinRange,
   presetToGoalPeriod,
   type DateRangePreset
@@ -13,10 +14,12 @@ import {
 import { formatDateTime, formatDuration } from '@renderer/lib/format'
 import { sessionTone } from '@renderer/lib/statusTones'
 import { computePlatformSummaries } from '@renderer/lib/platformSummary'
+import { computeTrendCallout } from '@renderer/lib/trendCallout'
 import type { Goal, MetricSnapshot, StreamSession } from '@shared/schemas'
 import styles from './Analytics.module.css'
 
 const PERIOD_LABEL: Record<string, string> = { weekly: 'Weekly goals', monthly: 'Monthly goals' }
+const PRIOR_PERIOD_LABEL: Record<string, string> = { '7d': 'week', '30d': 'month' }
 
 export function Analytics(): JSX.Element {
   const [sessions, setSessions] = useState<StreamSession[]>([])
@@ -44,6 +47,13 @@ export function Analytics(): JSX.Element {
 
   const goalPeriod = presetToGoalPeriod(preset)
   const visibleGoals = goalPeriod ? goals.filter((goal) => goal.period.toLowerCase() === goalPeriod) : goals
+
+  const priorBounds = useMemo(() => getPriorRangeBounds(bounds), [bounds])
+  const trendCallout = useMemo(
+    () => (priorBounds ? computeTrendCallout(sessions, bounds, priorBounds) : undefined),
+    [sessions, bounds, priorBounds]
+  )
+  const periodLabel = PRIOR_PERIOD_LABEL[preset]
 
   return (
     <div className={styles.wrap}>
@@ -111,6 +121,34 @@ export function Analytics(): JSX.Element {
               </div>
             ))}
           </div>
+        </Card>
+      )}
+
+      {!loading && trendCallout && (
+        <Card title="Trends" subtitle={`Compared to the prior ${periodLabel}`}>
+          {trendCallout.kind === 'insufficient-history' ? (
+            <p className={styles.timelineMeta}>
+              Not enough recorded history yet to compare to the prior {periodLabel} — check back once you have a full{' '}
+              {periodLabel} on each side.
+            </p>
+          ) : (
+            <div className={styles.trendList}>
+              <div className={styles.trendRow}>
+                <span className={styles.trendValue}>{trendCallout.currentSessions}</span>
+                <span>
+                  session{trendCallout.currentSessions === 1 ? '' : 's'} this {periodLabel} vs.{' '}
+                  <span className={styles.trendValue}>{trendCallout.priorSessions}</span> last {periodLabel}
+                </span>
+              </div>
+              <div className={styles.trendRow}>
+                <span className={styles.trendValue}>{trendCallout.currentHours}h</span>
+                <span>
+                  this {periodLabel} vs. <span className={styles.trendValue}>{trendCallout.priorHours}h</span> last{' '}
+                  {periodLabel}
+                </span>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 

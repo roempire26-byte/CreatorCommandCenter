@@ -10,12 +10,13 @@ import {
   endSessionSchema,
   listMetricSnapshotsSchema,
   saveObsSettingsSchema,
-  startSessionSchema
+  startSessionSchema,
+  updateContentItemStatusSchema
 } from '@shared/schemas'
 import type { DbHandle } from '@database/db'
 import { createSession, endSession, listSessions } from '@database/repositories/sessions'
 import { createGoal, listGoals } from '@database/repositories/goals'
-import { createContentItem, listContentItems } from '@database/repositories/content-items'
+import { createContentItem, listContentItems, updateContentItemStatus } from '@database/repositories/content-items'
 import { createChecklistItem, deleteChecklistItem, listChecklistItems } from '@database/repositories/checklist-items'
 import { createMetricSnapshot, listMetricSnapshots, listMetricSnapshotsForSession } from '@database/repositories/metric-snapshots'
 import { listActivityLog } from '@database/repositories/activity-log'
@@ -70,6 +71,19 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     const parsed = createContentItemSchema.parse(input)
     const item = createContentItem(dbHandle, parsed)
     logActivity(dbHandle, { category: 'content', action: 'content-item-created', status: 'success', detail: item.title })
+    return item
+  })
+
+  ipcMain.handle(IPC.dbUpdateContentItemStatus, (_event, input: unknown) => {
+    const parsed = updateContentItemStatusSchema.parse(input)
+    const item = updateContentItemStatus(dbHandle, parsed.id, parsed.status)
+    if (!item) throw new Error('Content item not found')
+    logActivity(dbHandle, {
+      category: 'content',
+      action: 'content-item-status-changed',
+      status: 'success',
+      detail: `${item.title} -> ${parsed.status}`
+    })
     return item
   })
 

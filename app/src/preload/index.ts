@@ -27,6 +27,8 @@ const db = {
   createGoal: (input: CreateGoalInput): Promise<Goal> => ipcRenderer.invoke(IPC.dbCreateGoal, input),
   listContentItems: (): Promise<ContentItem[]> => ipcRenderer.invoke(IPC.dbListContentItems),
   createContentItem: (input: CreateContentItemInput): Promise<ContentItem> => ipcRenderer.invoke(IPC.dbCreateContentItem, input),
+  updateContentItemStatus: (id: string, status: ContentItem['status']): Promise<ContentItem> =>
+    ipcRenderer.invoke(IPC.dbUpdateContentItemStatus, { id, status }),
   listChecklistItems: (): Promise<ChecklistItem[]> => ipcRenderer.invoke(IPC.dbListChecklistItems),
   createChecklistItem: (input: CreateChecklistItemInput): Promise<ChecklistItem> =>
     ipcRenderer.invoke(IPC.dbCreateChecklistItem, input),

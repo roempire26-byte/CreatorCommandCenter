@@ -1,25 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Card } from '@renderer/components/Card'
-import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
-import { contentItemTone } from '@renderer/lib/statusTones'
+import { Modal } from '@renderer/components/Modal'
+import { buttonClassName } from '@renderer/components/Button'
+import { AddContentItemForm } from '@renderer/components/forms/AddContentItemForm'
 import type { ContentItem } from '@shared/schemas'
 import styles from './Content.module.css'
 
-const STATUS_FILTERS: (ContentItem['status'] | 'all')[] = [
-  'all',
-  'idea',
-  'captured',
-  'drafting',
-  'ready-for-review',
-  'approved',
-  'published'
-]
+const STATUS_OPTIONS: ContentItem['status'][] = ['idea', 'captured', 'drafting', 'ready-for-review', 'approved', 'published']
+const STATUS_FILTERS: (ContentItem['status'] | 'all')[] = ['all', ...STATUS_OPTIONS]
 
 export function Content(): JSX.Element {
   const [items, setItems] = useState<ContentItem[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<ContentItem['status'] | 'all'>('all')
+  const [showAddForm, setShowAddForm] = useState(false)
 
   useEffect(() => {
     window.commandCenter.db.listContentItems().then((result) => {
@@ -32,6 +27,16 @@ export function Content(): JSX.Element {
     () => (statusFilter === 'all' ? items : items.filter((item) => item.status === statusFilter)),
     [items, statusFilter]
   )
+
+  async function handleStatusChange(item: ContentItem, status: ContentItem['status']): Promise<void> {
+    const previous = items
+    setItems((prev) => prev.map((entry) => (entry.id === item.id ? { ...entry, status } : entry)))
+    try {
+      await window.commandCenter.db.updateContentItemStatus(item.id, status)
+    } catch {
+      setItems(previous)
+    }
+  }
 
   return (
     <div className={styles.wrap}>
@@ -46,6 +51,9 @@ export function Content(): JSX.Element {
             {status.replace(/-/g, ' ')}
           </button>
         ))}
+        <button type="button" className={buttonClassName('secondary')} onClick={() => setShowAddForm(true)}>
+          Add item
+        </button>
       </div>
 
       <Card
@@ -75,12 +83,35 @@ export function Content(): JSX.Element {
                   <span className={styles.itemMeta}>{item.type}</span>
                   {item.draft && <span className={styles.itemDraft}>{item.draft}</span>}
                 </div>
-                <StatusPill tone={contentItemTone(item.status)} label={item.status.replace(/-/g, ' ')} />
+                <select
+                  className={styles.statusSelect}
+                  value={item.status}
+                  onChange={(e) => handleStatusChange(item, e.target.value as ContentItem['status'])}
+                  aria-label={`Status for ${item.title}`}
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option.replace(/-/g, ' ')}
+                    </option>
+                  ))}
+                </select>
               </div>
             ))}
           </div>
         )}
       </Card>
+
+      {showAddForm && (
+        <Modal title="Add content item" onClose={() => setShowAddForm(false)}>
+          <AddContentItemForm
+            onCreated={(item) => {
+              setItems((prev) => [item, ...prev])
+              setShowAddForm(false)
+            }}
+            onCancel={() => setShowAddForm(false)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

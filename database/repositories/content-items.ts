@@ -42,3 +42,18 @@ export function createContentItem(handle: DbHandle, input: CreateContentItemInpu
 
   return { id, ...input }
 }
+
+export function getContentItem(handle: DbHandle, id: string): ContentItem | undefined {
+  const rows = query<ContentItemRow>(handle.db, 'SELECT * FROM content_items WHERE id = ?', [id])
+  return rows[0] ? toContentItem(rows[0]) : undefined
+}
+
+export function updateContentItemStatus(handle: DbHandle, id: string, status: ContentItem['status']): ContentItem | undefined {
+  const existing = getContentItem(handle, id)
+  if (!existing) return undefined
+
+  mutate(handle.db, 'UPDATE content_items SET status = ? WHERE id = ?', [status, id])
+  saveDatabase(handle)
+
+  return { ...existing, status }
+}

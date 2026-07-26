@@ -7,6 +7,7 @@ export const IPC = {
   dbCreateGoal: 'db:createGoal',
   dbListContentItems: 'db:listContentItems',
   dbCreateContentItem: 'db:createContentItem',
+  dbUpdateContentItemStatus: 'db:updateContentItemStatus',
   dbListActivity: 'db:listActivity',
   dbListChecklistItems: 'db:listChecklistItems',
   dbCreateChecklistItem: 'db:createChecklistItem',

@@ -71,6 +71,23 @@
   color: var(--text-muted);
 }
 
+.statusSelect {
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  text-transform: capitalize;
+  outline: none;
+}
+
+.statusSelect:focus {
+  border-color: var(--accent-cyan);
+}
+
 .itemDraft {
   font-size: 12px;
   color: var(--text-muted);

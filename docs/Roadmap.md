@@ -46,11 +46,25 @@ This roadmap is intentionally outcome-based. Dates will be assigned only after S
 - Dry-run automation runner and detailed execution log.
 - Optional n8n-compatible workflow integration.
 
-## Sprint 6 — Optional AI workspace
+## Sprint 6 — Live platform metrics
+
+**Outcome:** Follower counts and other basic metrics are pulled automatically from
+platforms the user has connected, instead of typed in by hand every time.
+
+- Real OAuth connection flow per platform (user logs in and grants access — the app
+  never asks for or stores a password, only tokens the user's own login produces).
+- Twitch first: follower count via the Helix API, auto-captured at session start/end
+  to compute a real "followers gained" delta, feeding the existing `MetricSnapshot`
+  flow from Sprint 3 instead of replacing it.
+- TikTok deliberately deferred to its own follow-up slice — it requires TikTok's app
+  review approval for the scope that exposes follower count, which is a real external
+  wait outside this project's control, not a technical blocker to solve around.
+
+## Sprint 7 — Optional AI workspace
 
 **Outcome:** AI helps with drafting and synthesis while staying controllable and cost-aware.
 
-- Provider-neutral AI adapter.
+- Provider-neutral AI adapter, starting with Anthropic (Claude).
 - Draft ideas, titles, descriptions, and post-stream summaries.
 - Budget/usage visibility and approval rules.
 

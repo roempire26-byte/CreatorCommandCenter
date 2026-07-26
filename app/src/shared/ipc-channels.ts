@@ -22,5 +22,8 @@ export const IPC = {
   obsGetSettings: 'obs:getSettings',
   obsSaveSettings: 'obs:saveSettings',
   obsStartStream: 'obs:startStream',
-  obsStopStream: 'obs:stopStream'
+  obsStopStream: 'obs:stopStream',
+  twitchGetSettings: 'twitch:getSettings',
+  twitchConnect: 'twitch:connect',
+  twitchDisconnect: 'twitch:disconnect'
 } as const

@@ -1,6 +1,7 @@
-import { ipcMain } from 'electron'
+import { ipcMain, shell } from 'electron'
 import { IPC } from '@shared/ipc-channels'
 import {
+  connectTwitchSchema,
   createChecklistItemSchema,
   createContentItemSchema,
   createGoalSchema,
@@ -23,8 +24,10 @@ import { listAutomationRuns } from '@database/repositories/automation-runs'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
+import { connectTwitch } from '@backend/twitch/oauth'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
+import { clearTwitchConnection, loadTwitchSettings, saveTwitchConnection } from './twitch-settings'
 
 interface RegisterIpcOptions {
   dbHandle: DbHandle
@@ -161,5 +164,37 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
       logActivity(dbHandle, { category: 'obs', action: 'stop-stream', status: 'danger', detail })
       throw error
     }
+  })
+
+  ipcMain.handle(IPC.twitchGetSettings, () => loadTwitchSettings(userDataDir))
+
+  ipcMain.handle(IPC.twitchConnect, async (_event, input: unknown) => {
+    const parsed = connectTwitchSchema.parse(input)
+    try {
+      const connection = await connectTwitch({
+        clientId: parsed.clientId,
+        openUrl: (url) => {
+          void shell.openExternal(url)
+        }
+      })
+      saveTwitchConnection(userDataDir, parsed.clientId, connection)
+      logActivity(dbHandle, {
+        category: 'twitch',
+        action: 'connected',
+        status: 'success',
+        detail: `Connected as ${connection.login}`
+      })
+      return loadTwitchSettings(userDataDir)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      logActivity(dbHandle, { category: 'twitch', action: 'connect-failed', status: 'danger', detail })
+      throw error
+    }
+  })
+
+  ipcMain.handle(IPC.twitchDisconnect, () => {
+    clearTwitchConnection(userDataDir)
+    logActivity(dbHandle, { category: 'twitch', action: 'disconnected', status: 'neutral' })
+    return loadTwitchSettings(userDataDir)
   })
 }

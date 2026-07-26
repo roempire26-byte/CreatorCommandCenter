@@ -4,6 +4,7 @@ import type {
   ActivityLogEntry,
   AutomationRun,
   ChecklistItem,
+  ConnectTwitchInput,
   ContentItem,
   CreateChecklistItemInput,
   CreateContentItemInput,
@@ -16,7 +17,8 @@ import type {
   ObsStatus,
   SaveObsSettingsInput,
   StartSessionInput,
-  StreamSession
+  StreamSession,
+  TwitchSettings
 } from '@shared/schemas'
 
 const db = {
@@ -60,11 +62,18 @@ const automation = {
   runContentReviewCheck: (): Promise<AutomationRun> => ipcRenderer.invoke(IPC.automationRunContentReviewCheck)
 }
 
+const twitch = {
+  getSettings: (): Promise<TwitchSettings> => ipcRenderer.invoke(IPC.twitchGetSettings),
+  connect: (input: ConnectTwitchInput): Promise<TwitchSettings> => ipcRenderer.invoke(IPC.twitchConnect, input),
+  disconnect: (): Promise<TwitchSettings> => ipcRenderer.invoke(IPC.twitchDisconnect)
+}
+
 const api = {
   appVersion: process.env.npm_package_version ?? '0.1.0',
   db,
   obs,
-  automation
+  automation,
+  twitch
 }
 
 contextBridge.exposeInMainWorld('commandCenter', api)

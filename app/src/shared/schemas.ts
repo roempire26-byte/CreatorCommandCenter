@@ -150,3 +150,16 @@ export const automationRunSchema = z.object({
   result: z.string().nullable()
 })
 export type AutomationRun = z.infer<typeof automationRunSchema>
+
+export const connectTwitchSchema = z.object({
+  clientId: z.string().trim().min(1).max(100)
+})
+export type ConnectTwitchInput = z.infer<typeof connectTwitchSchema>
+
+export const twitchSettingsSchema = z.object({
+  clientId: z.string().nullable(),
+  login: z.string().nullable(),
+  connected: z.boolean(),
+  redirectUri: z.string()
+})
+export type TwitchSettings = z.infer<typeof twitchSettingsSchema>

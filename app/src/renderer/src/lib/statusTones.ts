@@ -1,4 +1,4 @@
-import type { ContentItem, StreamSession } from '@shared/schemas'
+import type { AutomationRun, ContentItem, StreamSession } from '@shared/schemas'
 import type { StatusTone } from '@renderer/components/StatusPill'
 
 export function contentItemTone(status: ContentItem['status']): StatusTone {
@@ -24,6 +24,18 @@ export function sessionTone(status: StreamSession['status']): StatusTone {
     case 'completed':
       return 'success'
     case 'cancelled':
+    default:
+      return 'neutral'
+  }
+}
+
+export function automationRunTone(status: AutomationRun['status']): StatusTone {
+  switch (status) {
+    case 'completed':
+      return 'success'
+    case 'failed':
+      return 'danger'
+    case 'running':
     default:
       return 'neutral'
   }

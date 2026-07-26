@@ -19,6 +19,7 @@ import { createGoal, listGoals } from '@database/repositories/goals'
 import { createContentItem, listContentItems, updateContentItemStatus } from '@database/repositories/content-items'
 import { createChecklistItem, deleteChecklistItem, listChecklistItems } from '@database/repositories/checklist-items'
 import { createMetricSnapshot, listMetricSnapshots, listMetricSnapshotsForSession } from '@database/repositories/metric-snapshots'
+import { listAutomationRuns } from '@database/repositories/automation-runs'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { logActivity } from '@backend/activity-log'
 import type { ObsAdapter } from '@backend/obs/adapter'
@@ -113,6 +114,8 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     return listMetricSnapshotsForSession(dbHandle, parsed.sessionId)
   })
   ipcMain.handle(IPC.dbListMetricSnapshots, () => listMetricSnapshots(dbHandle))
+
+  ipcMain.handle(IPC.dbListAutomationRuns, () => listAutomationRuns(dbHandle))
 
   ipcMain.handle(IPC.dbListActivity, (_event, limit: unknown) => {
     const safeLimit = typeof limit === 'number' && Number.isFinite(limit) ? Math.min(Math.max(1, limit), 200) : undefined

@@ -133,3 +133,17 @@ export type MetricSnapshot = z.infer<typeof metricSnapshotSchema>
 
 export const listMetricSnapshotsSchema = z.object({ sessionId: z.string() })
 export type ListMetricSnapshotsInput = z.infer<typeof listMetricSnapshotsSchema>
+
+export const automationRunStatusSchema = z.enum(['running', 'completed', 'failed'])
+export type AutomationRunStatus = z.infer<typeof automationRunStatusSchema>
+
+export const automationRunSchema = z.object({
+  id: z.string(),
+  workflow: z.string(),
+  status: automationRunStatusSchema,
+  initiatedBy: z.string(),
+  startedAt: z.string(),
+  completedAt: z.string().nullable(),
+  result: z.string().nullable()
+})
+export type AutomationRun = z.infer<typeof automationRunSchema>

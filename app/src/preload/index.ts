@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '@shared/ipc-channels'
 import type {
   ActivityLogEntry,
+  AutomationRun,
   ChecklistItem,
   ContentItem,
   CreateChecklistItemInput,
@@ -38,6 +39,7 @@ const db = {
   listMetricSnapshotsForSession: (sessionId: string): Promise<MetricSnapshot[]> =>
     ipcRenderer.invoke(IPC.dbListMetricSnapshotsForSession, { sessionId }),
   listMetricSnapshots: (): Promise<MetricSnapshot[]> => ipcRenderer.invoke(IPC.dbListMetricSnapshots),
+  listAutomationRuns: (): Promise<AutomationRun[]> => ipcRenderer.invoke(IPC.dbListAutomationRuns),
   listActivity: (limit?: number): Promise<ActivityLogEntry[]> => ipcRenderer.invoke(IPC.dbListActivity, limit)
 }
 

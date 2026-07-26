@@ -47,6 +47,7 @@ Run these from inside `app/`:
 | `npm run build` | Type-check and build production bundles into `out/`. |
 | `npm run preview` | Run the built app from `out/` without rebuilding. |
 | `npm run typecheck` | Run TypeScript checks for both the renderer and the main/preload processes. |
+| `npm run package:win` | Build and package a portable Windows `.exe` into `dist/` (see Packaging below). |
 
 ## Project structure
 
@@ -78,6 +79,37 @@ yet) — see `docs/Sprint 2.md` for why, and the constraint that keeps that opti
 later (no `electron` imports inside those folders). `automation/` specifically holds only
 pure workflow logic (inputs in, a result out, no side effects) — `backend/automation-runner.ts`
 is the orchestration layer that actually persists runs and logs activity.
+
+## Packaging (portable .exe)
+
+```bash
+cd app
+npm run package:win
+```
+
+This runs `electron-vite build` then `electron-builder --win portable`, producing
+`dist/CreatorCommandCenter-<version>.exe` — a single self-contained portable
+executable. No installer, no admin rights, no Start Menu entry: just double-click it
+(or a shortcut to it) to run. It extracts itself to a temp folder on launch, same as
+any portable Electron app.
+
+Notes:
+
+- **Uses `%APPDATA%/creator-command-center/` for its data either way** — the packaged
+  app and `npm run dev` share the same SQLite file and settings, since both use the
+  same `appId`/product name for the user-data path. Don't run both at once against
+  real data you care about without knowing that.
+- **`sql.js`'s `.wasm` files are explicitly unpacked** from the `asar` archive
+  (`asarUnpack` in `app/package.json`'s `build` config) because loading a `.wasm` file
+  via `fs.readFileSync` needs a real file on disk, not a virtual path inside `asar` —
+  verified this works by launching the actual built `.exe` and confirming the database
+  initializes correctly, not just that the build succeeds.
+- **Not code-signed with a real certificate.** Windows SmartScreen will likely warn
+  "Windows protected your PC" on first launch since there's no purchased code-signing
+  cert behind it — this is expected for a locally-built personal app, not a bug. Click
+  **More info → Run anyway**.
+- Rebuild and replace the `.exe` whenever you want the desktop shortcut to reflect
+  new code — packaging is a manual step, not automatic on every `npm run build`.
 
 ## Local data
 

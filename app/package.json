@@ -10,7 +10,8 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.web.json && tsc --noEmit -p tsconfig.node.json",
-    "start": "electron-vite preview"
+    "start": "electron-vite preview",
+    "package:win": "npm run build && electron-builder --win portable"
   },
   "dependencies": {
     "obs-websocket-js": "^5.0.8",
@@ -26,12 +27,31 @@
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^4.3.1",
     "electron": "^31.4.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^2.3.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.3"
   },
+  "build": {
+    "appId": "com.creatorcommandcenter.app",
+    "productName": "Creator Command Center",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "asarUnpack": [
+      "**/node_modules/sql.js/dist/*.wasm"
+    ],
+    "win": {
+      "target": "portable",
+      "artifactName": "CreatorCommandCenter-${version}.${ext}"
+    }
+  },
   "allowScripts": {
     "electron@31.7.7": true,
-    "esbuild@0.21.5": true
+    "esbuild@0.21.5": true,
+    "electron-winstaller@5.4.0": true
   }
 }

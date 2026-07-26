@@ -1,10 +1,12 @@
-# Creator Command Center — App (Sprint 2)
+# Creator Command Center — App (Sprint 3)
 
 Desktop application with navigation, the Cyberpunk Executive design system, seven
 routes, a Mission Control dashboard, a `Ctrl/Cmd + K` command palette (Sprint 1), local
-SQLite persistence, and a read-only OBS WebSocket status adapter (Sprint 2). No platform
-accounts, real automation, or AI calls are wired up yet — see
-[`docs/Sprint 2.md`](../docs/Sprint%202.md) for scope.
+SQLite persistence, a read-only OBS WebSocket status adapter (Sprint 2), a pre-stream
+checklist, session start/end tracking, confirmed OBS start/stop stream actions, and a
+post-stream briefing with manual metrics entry (Sprint 3). No platform accounts, real
+automation, or AI calls are wired up yet — see
+[`docs/Sprint 3.md`](../docs/Sprint%203.md) for scope.
 
 ## Tooling
 
@@ -88,16 +90,23 @@ later (no `electron` imports inside those two folders).
 3. With OBS's server disabled or OBS closed entirely, the app should just read "OBS
    offline" — no crash, no error dialog, no console noise from repeated reconnect
    attempts.
+4. With OBS connected, "Start stream" / "End stream" on the Streaming screen show a
+   confirmation dialog before actually calling OBS's `StartStream`/`StopStream`. Without
+   a connection, those buttons just track the session locally — no confirmation, since
+   there's no external action to approve.
 
-## What's real vs. mock in Sprint 2
+## What's real vs. mock in Sprint 3
 
-- Stream sessions, goals, content items, and the activity log are real, persisted in
-  SQLite, and created through the manual "Add session / goal / content item" forms
-  (Mission Control). There is no seed data — an empty database is the honest starting
-  state.
+- Stream sessions, goals, content items, checklist items, metric snapshots, and the
+  activity log are all real, persisted in SQLite. There is no seed data — an empty
+  database is the honest starting state.
 - OBS status, scene name, and streaming/recording flags are live when OBS's WebSocket
-  server is reachable; the app never sends OBS a command (no start/stop stream, no scene
-  switching) — that's Sprint 3.
+  server is reachable. Starting/ending a session on the Streaming screen calls OBS's real
+  `StartStream`/`StopStream` requests when connected (behind a confirmation dialog); it
+  never does anything beyond that (no scene switching, no source/recording control).
+- The post-stream briefing shown after ending a session reads real goals and real
+  content items — it does not compute a "change caused by this session," since nothing
+  in the data model ties a goal's progress to a specific session yet.
 - Command palette actions still just navigate; they don't trigger real automation.
 - Platform analytics (Twitch/YouTube/TikTok), automation runs, and AI features remain
   untouched — see `docs/Roadmap.md`.

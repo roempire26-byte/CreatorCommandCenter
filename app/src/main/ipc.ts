@@ -4,9 +4,11 @@ import {
   createChecklistItemSchema,
   createContentItemSchema,
   createGoalSchema,
+  createMetricSnapshotSchema,
   createSessionSchema,
   deleteChecklistItemSchema,
   endSessionSchema,
+  listMetricSnapshotsSchema,
   saveObsSettingsSchema,
   startSessionSchema
 } from '@shared/schemas'
@@ -15,6 +17,7 @@ import { createSession, endSession, listSessions } from '@database/repositories/
 import { createGoal, listGoals } from '@database/repositories/goals'
 import { createContentItem, listContentItems } from '@database/repositories/content-items'
 import { createChecklistItem, deleteChecklistItem, listChecklistItems } from '@database/repositories/checklist-items'
+import { createMetricSnapshot, listMetricSnapshotsForSession } from '@database/repositories/metric-snapshots'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { logActivity } from '@backend/activity-log'
 import type { ObsAdapter } from '@backend/obs/adapter'
@@ -78,6 +81,22 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
   ipcMain.handle(IPC.dbDeleteChecklistItem, (_event, input: unknown) => {
     const parsed = deleteChecklistItemSchema.parse(input)
     deleteChecklistItem(dbHandle, parsed.id)
+  })
+
+  ipcMain.handle(IPC.dbCreateMetricSnapshot, (_event, input: unknown) => {
+    const parsed = createMetricSnapshotSchema.parse(input)
+    const snapshot = createMetricSnapshot(dbHandle, parsed)
+    logActivity(dbHandle, {
+      category: 'metrics',
+      action: 'metric-recorded',
+      status: 'success',
+      detail: `${parsed.metricName}: ${parsed.value} (${parsed.platform})`
+    })
+    return snapshot
+  })
+  ipcMain.handle(IPC.dbListMetricSnapshotsForSession, (_event, input: unknown) => {
+    const parsed = listMetricSnapshotsSchema.parse(input)
+    return listMetricSnapshotsForSession(dbHandle, parsed.sessionId)
   })
 
   ipcMain.handle(IPC.dbListActivity, (_event, limit: unknown) => {

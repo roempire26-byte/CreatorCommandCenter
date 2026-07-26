@@ -113,3 +113,20 @@ export type ChecklistItem = z.infer<typeof checklistItemSchema>
 
 export const deleteChecklistItemSchema = z.object({ id: z.string() })
 export type DeleteChecklistItemInput = z.infer<typeof deleteChecklistItemSchema>
+
+export const createMetricSnapshotSchema = z.object({
+  sessionId: z.string(),
+  platform: z.string().trim().min(1).max(100),
+  metricName: z.string().trim().min(1).max(100),
+  value: z.number()
+})
+export type CreateMetricSnapshotInput = z.infer<typeof createMetricSnapshotSchema>
+
+export const metricSnapshotSchema = createMetricSnapshotSchema.extend({
+  id: z.string(),
+  capturedAt: z.string()
+})
+export type MetricSnapshot = z.infer<typeof metricSnapshotSchema>
+
+export const listMetricSnapshotsSchema = z.object({ sessionId: z.string() })
+export type ListMetricSnapshotsInput = z.infer<typeof listMetricSnapshotsSchema>

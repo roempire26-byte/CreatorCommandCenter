@@ -4,8 +4,8 @@ Creator Command Center is a private, desktop-first workspace for running a strea
 
 ## Project status
 
-**Stage:** Sprint 3 in progress — pre-stream checklist, session start/end tracking, and confirmed OBS start/stop actions are done; post-stream briefing and manual metrics entry are next (see `docs/Sprint 3.md`)  
-**Next milestone:** Finish Sprint 3, then Sprint 4 — analytics hub  
+**Stage:** Sprint 3 complete — pre-stream checklist, session start/end tracking, confirmed OBS start/stop actions, and a post-stream briefing with manual metrics entry  
+**Next milestone:** Sprint 4 — analytics hub  
 **Primary user:** The project owner (with room to support other creators later)
 
 ## What version 1 will do

@@ -7,8 +7,10 @@ import type {
   CreateChecklistItemInput,
   CreateContentItemInput,
   CreateGoalInput,
+  CreateMetricSnapshotInput,
   CreateSessionInput,
   Goal,
+  MetricSnapshot,
   ObsSettings,
   ObsStatus,
   SaveObsSettingsInput,
@@ -29,6 +31,10 @@ const db = {
   createChecklistItem: (input: CreateChecklistItemInput): Promise<ChecklistItem> =>
     ipcRenderer.invoke(IPC.dbCreateChecklistItem, input),
   deleteChecklistItem: (id: string): Promise<void> => ipcRenderer.invoke(IPC.dbDeleteChecklistItem, { id }),
+  createMetricSnapshot: (input: CreateMetricSnapshotInput): Promise<MetricSnapshot> =>
+    ipcRenderer.invoke(IPC.dbCreateMetricSnapshot, input),
+  listMetricSnapshotsForSession: (sessionId: string): Promise<MetricSnapshot[]> =>
+    ipcRenderer.invoke(IPC.dbListMetricSnapshotsForSession, { sessionId }),
   listActivity: (limit?: number): Promise<ActivityLogEntry[]> => ipcRenderer.invoke(IPC.dbListActivity, limit)
 }
 

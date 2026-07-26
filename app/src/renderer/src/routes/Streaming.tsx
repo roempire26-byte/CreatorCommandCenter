@@ -4,6 +4,7 @@ import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { buttonClassName } from '@renderer/components/Button'
 import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
+import { PostStreamBriefing } from '@renderer/components/PostStreamBriefing'
 import { StartSessionForm } from '@renderer/components/forms/StartSessionForm'
 import { useObsStatus } from '@renderer/lib/useObsStatus'
 import { obsStatusDisplay } from '@renderer/lib/obsStatusDisplay'
@@ -26,6 +27,7 @@ export function Streaming(): JSX.Element {
   const [pendingStart, setPendingStart] = useState<StartSessionInput | null>(null)
   const [pendingEnd, setPendingEnd] = useState(false)
   const [ending, setEnding] = useState(false)
+  const [briefingSession, setBriefingSession] = useState<StreamSession | null>(null)
   const elapsed = useElapsedTime(liveSession?.startedAt ?? null)
 
   useEffect(() => {
@@ -99,9 +101,10 @@ export function Streaming(): JSX.Element {
     if (!liveSession) return
     setEnding(true)
     try {
-      await window.commandCenter.db.endSession(liveSession.id)
+      const ended = await window.commandCenter.db.endSession(liveSession.id)
       setLiveSession(null)
       setChecked(new Set())
+      setBriefingSession(ended)
     } finally {
       setEnding(false)
     }
@@ -110,9 +113,10 @@ export function Streaming(): JSX.Element {
   async function confirmEnd(): Promise<void> {
     if (!liveSession) return
     await window.commandCenter.obs.stopStream()
-    await window.commandCenter.db.endSession(liveSession.id)
+    const ended = await window.commandCenter.db.endSession(liveSession.id)
     setLiveSession(null)
     setChecked(new Set())
+    setBriefingSession(ended)
   }
 
   const obsHint = obsControllable
@@ -204,15 +208,6 @@ export function Streaming(): JSX.Element {
         )}
       </Card>
 
-      <Card title="What's coming" subtitle="Rest of Sprint 3">
-        <div className={styles.upcoming}>
-          <div className={styles.upcomingItem}>
-            <span className={styles.upcomingSprint}>Sprint 3</span>
-            <span>Post-stream briefing and manual metrics entry</span>
-          </div>
-        </div>
-      </Card>
-
       {pendingStart && (
         <ConfirmDialog
           title="Start streaming on OBS?"
@@ -234,6 +229,8 @@ export function Streaming(): JSX.Element {
           onClose={() => setPendingEnd(false)}
         />
       )}
+
+      {briefingSession && <PostStreamBriefing session={briefingSession} onClose={() => setBriefingSession(null)} />}
     </div>
   )
 }

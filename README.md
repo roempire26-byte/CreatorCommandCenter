@@ -4,8 +4,8 @@ Creator Command Center is a private, desktop-first workspace for running a strea
 
 ## Project status
 
-**Stage:** Foundation / Sprint 0 complete  
-**Next milestone:** Sprint 1 — application shell and local dashboard  
+**Stage:** Sprint 1 complete — desktop shell, navigation, and Mission Control mock dashboard  
+**Next milestone:** Sprint 2 — local data (SQLite) and OBS connection awareness  
 **Primary user:** The project owner (with room to support other creators later)
 
 ## What version 1 will do
@@ -43,13 +43,28 @@ CreatorCommandCenter/
 
 ## Getting started
 
-This repository currently contains the product foundation. Read these files in order before implementing:
+Read these files in order before implementing further work:
 
 1. [Project Charter](docs/Project%20Charter.md)
 2. [PRD](docs/PRD.md)
 3. [Architecture](docs/Architecture.md)
 4. [Design System](docs/Design%20System.md)
 5. [Sprint 1](docs/Sprint%201.md)
+
+### Run the app locally
+
+Requires Node.js 18+ (verified on Node 24) and npm.
+
+```bash
+cd app
+npm install
+npm run dev
+```
+
+This starts the Vite dev server and launches the Electron window with hot reload.
+`Ctrl/Cmd + K` opens the command palette from anywhere in the app. No accounts,
+API keys, or external services are required — see [`app/README.md`](app/README.md)
+for scripts, project structure, and what's mock vs. real in this sprint.
 
 ## Working agreement
 

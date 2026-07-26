@@ -1,0 +1,57 @@
+:root {
+  /* Color — Cyberpunk Executive core palette */
+  --bg-canvas: #080a0f;
+  --bg-surface: #11141c;
+  --bg-elevated: #191e29;
+  --border-subtle: #2a3140;
+  --text-primary: #f4f7fb;
+  --text-muted: #98a2b3;
+  --accent-cyan: #42e8f4;
+  --accent-cyan-dim: rgba(66, 232, 244, 0.14);
+  --accent-violet: #a77bff;
+  --accent-violet-dim: rgba(167, 123, 255, 0.14);
+  --status-success: #62e6a7;
+  --status-success-dim: rgba(98, 230, 167, 0.14);
+  --status-warning: #f7c65b;
+  --status-warning-dim: rgba(247, 198, 91, 0.14);
+  --status-danger: #ff6e88;
+  --status-danger-dim: rgba(255, 110, 136, 0.14);
+
+  /* Typography */
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', -apple-system, sans-serif;
+  --text-size-base: 14px;
+  --line-height-base: 1.5;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Radii */
+  --radius-card: 12px;
+  --radius-modal: 16px;
+  --radius-control: 8px;
+
+  /* Layout */
+  --content-max-width: 1440px;
+  --page-padding: 24px;
+  --nav-rail-width: 88px;
+  --nav-rail-width-expanded: 240px;
+  --context-bar-height: 64px;
+
+  /* Motion */
+  --motion-fast: 180ms ease;
+  --motion-panel: 300ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-panel: 0ms;
+  }
+}

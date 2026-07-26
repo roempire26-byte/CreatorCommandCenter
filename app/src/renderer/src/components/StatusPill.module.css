@@ -1,0 +1,46 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.glyph {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.success {
+  color: var(--status-success);
+  border-color: rgba(98, 230, 167, 0.35);
+  background: var(--status-success-dim);
+}
+
+.warning {
+  color: var(--status-warning);
+  border-color: rgba(247, 198, 91, 0.35);
+  background: var(--status-warning-dim);
+}
+
+.danger {
+  color: var(--status-danger);
+  border-color: rgba(255, 110, 136, 0.35);
+  background: var(--status-danger-dim);
+}
+
+.live {
+  color: var(--accent-cyan);
+  border-color: rgba(66, 232, 244, 0.4);
+  background: var(--accent-cyan-dim);
+}
+
+.neutral {
+  color: var(--text-muted);
+}

@@ -14,5 +14,7 @@ export const IPC = {
   obsGetStatus: 'obs:getStatus',
   obsStatusChanged: 'obs:status-changed',
   obsGetSettings: 'obs:getSettings',
-  obsSaveSettings: 'obs:saveSettings'
+  obsSaveSettings: 'obs:saveSettings',
+  obsStartStream: 'obs:startStream',
+  obsStopStream: 'obs:stopStream'
 } as const

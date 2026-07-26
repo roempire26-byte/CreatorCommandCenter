@@ -100,4 +100,26 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     obsAdapter.reconnect()
     return loadObsSettings(userDataDir)
   })
+
+  ipcMain.handle(IPC.obsStartStream, async () => {
+    try {
+      await obsAdapter.startStream()
+      logActivity(dbHandle, { category: 'obs', action: 'start-stream', status: 'success' })
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      logActivity(dbHandle, { category: 'obs', action: 'start-stream', status: 'danger', detail })
+      throw error
+    }
+  })
+
+  ipcMain.handle(IPC.obsStopStream, async () => {
+    try {
+      await obsAdapter.stopStream()
+      logActivity(dbHandle, { category: 'obs', action: 'stop-stream', status: 'success' })
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      logActivity(dbHandle, { category: 'obs', action: 'stop-stream', status: 'danger', detail })
+      throw error
+    }
+  })
 }

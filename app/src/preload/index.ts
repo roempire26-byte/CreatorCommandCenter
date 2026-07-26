@@ -36,6 +36,8 @@ const obs = {
   getStatus: (): Promise<ObsStatus> => ipcRenderer.invoke(IPC.obsGetStatus),
   getSettings: (): Promise<ObsSettings> => ipcRenderer.invoke(IPC.obsGetSettings),
   saveSettings: (input: SaveObsSettingsInput): Promise<ObsSettings> => ipcRenderer.invoke(IPC.obsSaveSettings, input),
+  startStream: (): Promise<void> => ipcRenderer.invoke(IPC.obsStartStream),
+  stopStream: (): Promise<void> => ipcRenderer.invoke(IPC.obsStopStream),
   onStatusChange: (callback: (status: ObsStatus) => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent, status: ObsStatus): void => callback(status)
     ipcRenderer.on(IPC.obsStatusChanged, listener)

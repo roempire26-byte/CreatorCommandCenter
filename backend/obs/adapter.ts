@@ -73,6 +73,19 @@ export class ObsAdapter {
     return this.status
   }
 
+  // Real control actions — only permitted while genuinely connected, never
+  // attempted opportunistically. StreamStateChanged (subscribed above) is the
+  // source of truth for `streaming`, not an optimistic update here.
+  async startStream(): Promise<void> {
+    if (this.status.status !== 'connected') throw new Error('OBS is not connected')
+    await this.obs.call('StartStream')
+  }
+
+  async stopStream(): Promise<void> {
+    if (this.status.status !== 'connected') throw new Error('OBS is not connected')
+    await this.obs.call('StopStream')
+  }
+
   // Called after Settings saves new host/port/password — skip the backoff wait.
   reconnect(): void {
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer)

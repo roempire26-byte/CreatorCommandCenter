@@ -1,14 +1,15 @@
 import { FormEvent, useState } from 'react'
-import type { StreamSession } from '@shared/schemas'
+import type { StartSessionInput } from '@shared/schemas'
 import { buttonClassName } from '@renderer/components/Button'
 import formStyles from './Form.module.css'
 
 interface StartSessionFormProps {
-  onStarted: (session: StreamSession) => void
+  submitLabel: string
+  onSubmit: (input: StartSessionInput) => Promise<void>
   onCancel: () => void
 }
 
-export function StartSessionForm({ onStarted, onCancel }: StartSessionFormProps): JSX.Element {
+export function StartSessionForm({ submitLabel, onSubmit, onCancel }: StartSessionFormProps): JSX.Element {
   const [title, setTitle] = useState('')
   const [platform, setPlatform] = useState('Twitch')
   const [error, setError] = useState<string | null>(null)
@@ -24,8 +25,7 @@ export function StartSessionForm({ onStarted, onCancel }: StartSessionFormProps)
     setSubmitting(true)
     setError(null)
     try {
-      const session = await window.commandCenter.db.startSession({ title: title.trim(), platform: platform.trim() })
-      onStarted(session)
+      await onSubmit({ title: title.trim(), platform: platform.trim() })
     } catch {
       setError("Couldn't start the session — check the fields and try again.")
     } finally {
@@ -69,7 +69,7 @@ export function StartSessionForm({ onStarted, onCancel }: StartSessionFormProps)
           Cancel
         </button>
         <button type="submit" className={buttonClassName('primary')} disabled={submitting}>
-          {submitting ? 'Starting…' : 'Start stream'}
+          {submitting ? 'Starting…' : submitLabel}
         </button>
       </div>
     </form>

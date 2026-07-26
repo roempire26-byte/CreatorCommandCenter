@@ -1,10 +1,18 @@
 import { ipcMain } from 'electron'
 import { IPC } from '@shared/ipc-channels'
-import { createContentItemSchema, createGoalSchema, createSessionSchema, saveObsSettingsSchema } from '@shared/schemas'
+import {
+  createChecklistItemSchema,
+  createContentItemSchema,
+  createGoalSchema,
+  createSessionSchema,
+  deleteChecklistItemSchema,
+  saveObsSettingsSchema
+} from '@shared/schemas'
 import type { DbHandle } from '@database/db'
 import { createSession, listSessions } from '@database/repositories/sessions'
 import { createGoal, listGoals } from '@database/repositories/goals'
 import { createContentItem, listContentItems } from '@database/repositories/content-items'
+import { createChecklistItem, deleteChecklistItem, listChecklistItems } from '@database/repositories/checklist-items'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { logActivity } from '@backend/activity-log'
 import type { ObsAdapter } from '@backend/obs/adapter'
@@ -39,6 +47,16 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     const item = createContentItem(dbHandle, parsed)
     logActivity(dbHandle, { category: 'content', action: 'content-item-created', status: 'success', detail: item.title })
     return item
+  })
+
+  ipcMain.handle(IPC.dbListChecklistItems, () => listChecklistItems(dbHandle))
+  ipcMain.handle(IPC.dbCreateChecklistItem, (_event, input: unknown) => {
+    const parsed = createChecklistItemSchema.parse(input)
+    return createChecklistItem(dbHandle, parsed)
+  })
+  ipcMain.handle(IPC.dbDeleteChecklistItem, (_event, input: unknown) => {
+    const parsed = deleteChecklistItemSchema.parse(input)
+    deleteChecklistItem(dbHandle, parsed.id)
   })
 
   ipcMain.handle(IPC.dbListActivity, (_event, limit: unknown) => {

@@ -90,3 +90,17 @@ export const saveObsSettingsSchema = z.object({
   password: z.string().max(500).optional()
 })
 export type SaveObsSettingsInput = z.infer<typeof saveObsSettingsSchema>
+
+export const createChecklistItemSchema = z.object({
+  label: z.string().trim().min(1).max(200)
+})
+export type CreateChecklistItemInput = z.infer<typeof createChecklistItemSchema>
+
+export const checklistItemSchema = createChecklistItemSchema.extend({
+  id: z.string(),
+  sortOrder: z.number()
+})
+export type ChecklistItem = z.infer<typeof checklistItemSchema>
+
+export const deleteChecklistItemSchema = z.object({ id: z.string() })
+export type DeleteChecklistItemInput = z.infer<typeof deleteChecklistItemSchema>

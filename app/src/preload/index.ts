@@ -2,7 +2,9 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '@shared/ipc-channels'
 import type {
   ActivityLogEntry,
+  ChecklistItem,
   ContentItem,
+  CreateChecklistItemInput,
   CreateContentItemInput,
   CreateGoalInput,
   CreateSessionInput,
@@ -20,6 +22,10 @@ const db = {
   createGoal: (input: CreateGoalInput): Promise<Goal> => ipcRenderer.invoke(IPC.dbCreateGoal, input),
   listContentItems: (): Promise<ContentItem[]> => ipcRenderer.invoke(IPC.dbListContentItems),
   createContentItem: (input: CreateContentItemInput): Promise<ContentItem> => ipcRenderer.invoke(IPC.dbCreateContentItem, input),
+  listChecklistItems: (): Promise<ChecklistItem[]> => ipcRenderer.invoke(IPC.dbListChecklistItems),
+  createChecklistItem: (input: CreateChecklistItemInput): Promise<ChecklistItem> =>
+    ipcRenderer.invoke(IPC.dbCreateChecklistItem, input),
+  deleteChecklistItem: (id: string): Promise<void> => ipcRenderer.invoke(IPC.dbDeleteChecklistItem, { id }),
   listActivity: (limit?: number): Promise<ActivityLogEntry[]> => ipcRenderer.invoke(IPC.dbListActivity, limit)
 }
 

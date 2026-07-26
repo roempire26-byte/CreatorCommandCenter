@@ -33,3 +33,13 @@ export function getPriorRangeBounds(bounds: DateRangeBounds): DateRangeBounds | 
   const spanMs = bounds.end.getTime() - bounds.start.getTime()
   return { start: new Date(bounds.start.getTime() - spanMs), end: bounds.start }
 }
+
+// Goals have no per-date history — currentValue is a running total, not timestamped
+// entries — so there's no honest way to "filter goal progress by date range." Instead,
+// match the preset to the goal's own period: a 7-day view is only meaningful for goals
+// tracked weekly, a 30-day view for monthly goals. 'all' shows every goal regardless.
+export function presetToGoalPeriod(preset: DateRangePreset): string | null {
+  if (preset === '7d') return 'weekly'
+  if (preset === '30d') return 'monthly'
+  return null
+}

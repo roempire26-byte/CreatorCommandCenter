@@ -2,32 +2,48 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card } from '@renderer/components/Card'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
-import { DATE_RANGE_PRESETS, getDateRangeBounds, isWithinRange, type DateRangePreset } from '@renderer/lib/dateRange'
+import { Meter } from '@renderer/components/Meter'
+import {
+  DATE_RANGE_PRESETS,
+  getDateRangeBounds,
+  isWithinRange,
+  presetToGoalPeriod,
+  type DateRangePreset
+} from '@renderer/lib/dateRange'
 import { formatDateTime, formatDuration } from '@renderer/lib/format'
 import { sessionTone } from '@renderer/lib/statusTones'
 import { computePlatformSummaries } from '@renderer/lib/platformSummary'
-import type { MetricSnapshot, StreamSession } from '@shared/schemas'
+import type { Goal, MetricSnapshot, StreamSession } from '@shared/schemas'
 import styles from './Analytics.module.css'
+
+const PERIOD_LABEL: Record<string, string> = { weekly: 'Weekly goals', monthly: 'Monthly goals' }
 
 export function Analytics(): JSX.Element {
   const [sessions, setSessions] = useState<StreamSession[]>([])
   const [metrics, setMetrics] = useState<MetricSnapshot[]>([])
+  const [goals, setGoals] = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
   const [preset, setPreset] = useState<DateRangePreset>('30d')
 
   useEffect(() => {
-    Promise.all([window.commandCenter.db.listSessions(), window.commandCenter.db.listMetricSnapshots()]).then(
-      ([sessionsResult, metricsResult]) => {
-        setSessions(sessionsResult)
-        setMetrics(metricsResult)
-        setLoading(false)
-      }
-    )
+    Promise.all([
+      window.commandCenter.db.listSessions(),
+      window.commandCenter.db.listMetricSnapshots(),
+      window.commandCenter.db.listGoals()
+    ]).then(([sessionsResult, metricsResult, goalsResult]) => {
+      setSessions(sessionsResult)
+      setMetrics(metricsResult)
+      setGoals(goalsResult)
+      setLoading(false)
+    })
   }, [])
 
   const bounds = useMemo(() => getDateRangeBounds(preset), [preset])
   const filtered = useMemo(() => sessions.filter((session) => isWithinRange(session.startedAt, bounds)), [sessions, bounds])
   const platformSummaries = useMemo(() => computePlatformSummaries(filtered, metrics), [filtered, metrics])
+
+  const goalPeriod = presetToGoalPeriod(preset)
+  const visibleGoals = goalPeriod ? goals.filter((goal) => goal.period.toLowerCase() === goalPeriod) : goals
 
   return (
     <div className={styles.wrap}>
@@ -43,6 +59,29 @@ export function Analytics(): JSX.Element {
           </button>
         ))}
       </div>
+
+      {!loading && (
+        <Card
+          title="Goals"
+          subtitle={goalPeriod ? `${PERIOD_LABEL[goalPeriod]} — not scoped to the date range above` : 'All goals'}
+        >
+          {goals.length === 0 ? (
+            <EmptyState icon="◎" title="No goals set" description="Add goals from Mission Control to track progress here." />
+          ) : visibleGoals.length === 0 ? (
+            <EmptyState
+              icon="◎"
+              title={`No ${goalPeriod} goals`}
+              description="Switch to “All time” to see goals tracked on a different cadence."
+            />
+          ) : (
+            <div className={styles.goalsList}>
+              {visibleGoals.map((goal) => (
+                <Meter key={goal.id} label={goal.label} current={goal.currentValue} target={goal.target} unit={goal.unit} />
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {!loading && filtered.length > 0 && (
         <Card title="Platform summary" subtitle="Sessions, hours, and recorded metrics in this range">

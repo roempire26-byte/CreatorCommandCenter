@@ -3,9 +3,11 @@ import { Card } from '@renderer/components/Card'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { buttonClassName } from '@renderer/components/Button'
+import { StartSessionForm } from '@renderer/components/forms/StartSessionForm'
 import { useObsStatus } from '@renderer/lib/useObsStatus'
 import { obsStatusDisplay } from '@renderer/lib/obsStatusDisplay'
-import type { ChecklistItem } from '@shared/schemas'
+import { useElapsedTime } from '@renderer/lib/useElapsedTime'
+import type { ChecklistItem, StreamSession } from '@shared/schemas'
 import styles from './Streaming.module.css'
 
 export function Streaming(): JSX.Element {
@@ -17,11 +19,19 @@ export function Streaming(): JSX.Element {
   const [newLabel, setNewLabel] = useState('')
   const [loading, setLoading] = useState(true)
 
+  const [liveSession, setLiveSession] = useState<StreamSession | null>(null)
+  const [showStartForm, setShowStartForm] = useState(false)
+  const [ending, setEnding] = useState(false)
+  const elapsed = useElapsedTime(liveSession?.startedAt ?? null)
+
   useEffect(() => {
-    window.commandCenter.db.listChecklistItems().then((result) => {
-      setItems(result)
-      setLoading(false)
-    })
+    Promise.all([window.commandCenter.db.listChecklistItems(), window.commandCenter.db.listSessions()]).then(
+      ([checklistResult, sessions]) => {
+        setItems(checklistResult)
+        setLiveSession(sessions.find((session) => session.status === 'live') ?? null)
+        setLoading(false)
+      }
+    )
   }, [])
 
   async function handleAdd(event: FormEvent): Promise<void> {
@@ -52,12 +62,24 @@ export function Streaming(): JSX.Element {
     })
   }
 
-  const emptyDescription =
+  async function handleEnd(): Promise<void> {
+    if (!liveSession) return
+    setEnding(true)
+    try {
+      await window.commandCenter.db.endSession(liveSession.id)
+      setLiveSession(null)
+      setChecked(new Set())
+    } finally {
+      setEnding(false)
+    }
+  }
+
+  const obsHint =
     obsStatus.status === 'connected'
-      ? `OBS is connected${obsStatus.sceneName ? ` — current scene: ${obsStatus.sceneName}` : ''}. Session start/end controls arrive later in Sprint 3.`
+      ? `OBS is connected${obsStatus.sceneName ? ` — current scene: ${obsStatus.sceneName}` : ''}.`
       : obsStatus.status === 'auth-required'
         ? 'OBS was found but needs a password. Set the OBS WebSocket password in Settings to connect.'
-        : "OBS isn't connected yet. This screen will host start/end session controls once that slice of Sprint 3 lands."
+        : "OBS isn't connected yet. Session tracking below works either way — OBS-controlled start/stop is next."
 
   return (
     <div className={styles.wrap}>
@@ -65,7 +87,36 @@ export function Streaming(): JSX.Element {
         <div className={styles.statusRow}>
           <StatusPill tone={display.tone} label={display.label} pulse={display.pulse} />
         </div>
-        <p className={styles.hint}>{emptyDescription}</p>
+        <p className={styles.hint}>{obsHint}</p>
+      </Card>
+
+      <Card
+        title="Session"
+        subtitle={liveSession ? liveSession.platform : 'Nothing live right now'}
+        action={liveSession ? <StatusPill tone="live" label="Live" pulse /> : undefined}
+      >
+        {liveSession ? (
+          <>
+            <p className={styles.hint}>
+              <strong>{liveSession.title}</strong> — {elapsed} elapsed
+            </p>
+            <button type="button" className={buttonClassName('danger')} onClick={handleEnd} disabled={ending}>
+              {ending ? 'Ending…' : 'End stream'}
+            </button>
+          </>
+        ) : showStartForm ? (
+          <StartSessionForm
+            onStarted={(session) => {
+              setLiveSession(session)
+              setShowStartForm(false)
+            }}
+            onCancel={() => setShowStartForm(false)}
+          />
+        ) : (
+          <button type="button" className={buttonClassName('primary')} onClick={() => setShowStartForm(true)}>
+            Start stream
+          </button>
+        )}
       </Card>
 
       <Card title="Pre-stream checklist" subtitle="Review before you go live — checked items reset each time you open the app">
@@ -117,10 +168,6 @@ export function Streaming(): JSX.Element {
 
       <Card title="What's coming" subtitle="Rest of Sprint 3">
         <div className={styles.upcoming}>
-          <div className={styles.upcomingItem}>
-            <span className={styles.upcomingSprint}>Sprint 3</span>
-            <span>Session start/end tracking and a live-session view</span>
-          </div>
           <div className={styles.upcomingItem}>
             <span className={styles.upcomingSprint}>Sprint 3</span>
             <span>Confirmed OBS start/stop stream actions with audit logging</span>

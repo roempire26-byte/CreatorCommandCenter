@@ -12,12 +12,15 @@ import type {
   ObsSettings,
   ObsStatus,
   SaveObsSettingsInput,
+  StartSessionInput,
   StreamSession
 } from '@shared/schemas'
 
 const db = {
   listSessions: (): Promise<StreamSession[]> => ipcRenderer.invoke(IPC.dbListSessions),
   createSession: (input: CreateSessionInput): Promise<StreamSession> => ipcRenderer.invoke(IPC.dbCreateSession, input),
+  startSession: (input: StartSessionInput): Promise<StreamSession> => ipcRenderer.invoke(IPC.dbStartSession, input),
+  endSession: (id: string): Promise<StreamSession> => ipcRenderer.invoke(IPC.dbEndSession, { id }),
   listGoals: (): Promise<Goal[]> => ipcRenderer.invoke(IPC.dbListGoals),
   createGoal: (input: CreateGoalInput): Promise<Goal> => ipcRenderer.invoke(IPC.dbCreateGoal, input),
   listContentItems: (): Promise<ContentItem[]> => ipcRenderer.invoke(IPC.dbListContentItems),

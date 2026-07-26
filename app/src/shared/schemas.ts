@@ -18,6 +18,15 @@ export const streamSessionSchema = createSessionSchema.extend({
 })
 export type StreamSession = z.infer<typeof streamSessionSchema>
 
+export const startSessionSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  platform: z.string().trim().min(1).max(100)
+})
+export type StartSessionInput = z.infer<typeof startSessionSchema>
+
+export const endSessionSchema = z.object({ id: z.string() })
+export type EndSessionInput = z.infer<typeof endSessionSchema>
+
 export const createGoalSchema = z.object({
   metric: z.string().trim().min(1).max(100),
   label: z.string().trim().min(1).max(200),

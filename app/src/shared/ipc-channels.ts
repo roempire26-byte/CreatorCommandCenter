@@ -1,6 +1,8 @@
 export const IPC = {
   dbListSessions: 'db:listSessions',
   dbCreateSession: 'db:createSession',
+  dbStartSession: 'db:startSession',
+  dbEndSession: 'db:endSession',
   dbListGoals: 'db:listGoals',
   dbCreateGoal: 'db:createGoal',
   dbListContentItems: 'db:listContentItems',

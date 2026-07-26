@@ -6,10 +6,12 @@ import {
   createGoalSchema,
   createSessionSchema,
   deleteChecklistItemSchema,
-  saveObsSettingsSchema
+  endSessionSchema,
+  saveObsSettingsSchema,
+  startSessionSchema
 } from '@shared/schemas'
 import type { DbHandle } from '@database/db'
-import { createSession, listSessions } from '@database/repositories/sessions'
+import { createSession, endSession, listSessions } from '@database/repositories/sessions'
 import { createGoal, listGoals } from '@database/repositories/goals'
 import { createContentItem, listContentItems } from '@database/repositories/content-items'
 import { createChecklistItem, deleteChecklistItem, listChecklistItems } from '@database/repositories/checklist-items'
@@ -30,6 +32,25 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     const parsed = createSessionSchema.parse(input)
     const session = createSession(dbHandle, parsed)
     logActivity(dbHandle, { category: 'session', action: 'session-created', status: 'success', detail: session.title })
+    return session
+  })
+
+  ipcMain.handle(IPC.dbStartSession, (_event, input: unknown) => {
+    const parsed = startSessionSchema.parse(input)
+    const session = createSession(dbHandle, { ...parsed, status: 'live', startedAt: new Date().toISOString() })
+    logActivity(dbHandle, { category: 'session', action: 'session-started', status: 'live', detail: session.title })
+    return session
+  })
+  ipcMain.handle(IPC.dbEndSession, (_event, input: unknown) => {
+    const parsed = endSessionSchema.parse(input)
+    const session = endSession(dbHandle, parsed.id, new Date().toISOString())
+    if (!session) throw new Error('Session not found')
+    logActivity(dbHandle, {
+      category: 'session',
+      action: 'session-ended',
+      status: 'success',
+      detail: `${session.title} — ${session.durationSeconds ?? 0}s`
+    })
     return session
   })
 

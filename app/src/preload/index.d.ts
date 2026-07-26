@@ -1,6 +1,4 @@
-export interface CommandCenterApi {
-  appVersion: string
-}
+import type { CommandCenterApi } from './index'
 
 declare global {
   interface Window {

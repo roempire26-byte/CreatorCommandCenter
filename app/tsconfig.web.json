@@ -15,8 +15,14 @@
     "noUnusedParameters": true,
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": ["src/renderer/src/*"]
+      "@renderer/*": ["src/renderer/src/*"],
+      "@shared/*": ["src/shared/*"]
     }
   },
-  "include": ["src/renderer/src/**/*", "src/preload/index.d.ts", "src/renderer/src/css-modules.d.ts"]
+  "include": [
+    "src/renderer/src/**/*",
+    "src/preload/index.d.ts",
+    "src/renderer/src/css-modules.d.ts",
+    "src/shared/**/*"
+  ]
 }

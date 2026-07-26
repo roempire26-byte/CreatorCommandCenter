@@ -1,4 +1,6 @@
 import { StatusPill } from './StatusPill'
+import { useObsStatus } from '@renderer/lib/useObsStatus'
+import { obsStatusDisplay } from '@renderer/lib/obsStatusDisplay'
 import styles from './TopContextBar.module.css'
 
 const isMac = typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac')
@@ -10,6 +12,9 @@ interface TopContextBarProps {
 }
 
 export function TopContextBar({ title, subtitle, onOpenPalette }: TopContextBarProps): JSX.Element {
+  const obsStatus = useObsStatus()
+  const display = obsStatusDisplay(obsStatus)
+
   return (
     <header className={styles.bar}>
       <div className={styles.titleGroup}>
@@ -18,7 +23,7 @@ export function TopContextBar({ title, subtitle, onOpenPalette }: TopContextBarP
       </div>
 
       <div className={styles.actions}>
-        <StatusPill tone="neutral" label="OBS offline" />
+        <StatusPill tone={display.tone} label={display.label} pulse={display.pulse} />
         <button type="button" className={styles.paletteButton} onClick={onOpenPalette}>
           Search or jump to…
           <span className={styles.kbd}>{isMac ? '⌘' : 'Ctrl'} K</span>

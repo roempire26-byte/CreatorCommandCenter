@@ -8,7 +8,22 @@
     "skipLibCheck": true,
     "strict": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@database/*": ["../database/*"],
+      "@backend/*": ["../backend/*"],
+      "sql.js": ["node_modules/@types/sql.js"],
+      "obs-websocket-js": ["node_modules/obs-websocket-js"]
+    }
   },
-  "include": ["electron.vite.config.ts", "src/main/**/*", "src/preload/**/*"]
+  "include": [
+    "electron.vite.config.ts",
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/shared/**/*",
+    "../database/**/*",
+    "../backend/**/*"
+  ]
 }

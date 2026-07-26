@@ -4,8 +4,8 @@ Creator Command Center is a private, desktop-first workspace for running a strea
 
 ## Project status
 
-**Stage:** Sprint 1 complete — desktop shell, navigation, and Mission Control mock dashboard  
-**Next milestone:** Sprint 2 — local data (SQLite) and OBS connection awareness  
+**Stage:** Sprint 2 complete — local SQLite persistence and read-only OBS connection awareness  
+**Next milestone:** Sprint 3 — pre/post-stream workflow and OBS control actions  
 **Primary user:** The project owner (with room to support other creators later)
 
 ## What version 1 will do
@@ -35,9 +35,9 @@ CreatorCommandCenter/
 │   ├── icons/
 │   └── inspiration/
 ├── app/                  # Desktop application source (Sprint 1+)
-├── backend/              # Local integration and orchestration service (Sprint 2+)
+├── backend/              # Activity log + OBS adapter, imported by app/src/main (Sprint 2+)
 ├── automation/           # Reusable automation workflows (Sprint 3+)
-├── database/             # Schema, migrations, and local seed data (Sprint 2+)
+├── database/             # Schema, migrations, and repositories (Sprint 2+)
 └── README.md
 ```
 
@@ -50,6 +50,7 @@ Read these files in order before implementing further work:
 3. [Architecture](docs/Architecture.md)
 4. [Design System](docs/Design%20System.md)
 5. [Sprint 1](docs/Sprint%201.md)
+6. [Sprint 2](docs/Sprint%202.md)
 
 ### Run the app locally
 

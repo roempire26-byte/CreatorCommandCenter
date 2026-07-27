@@ -14,7 +14,9 @@ export function Clips(): JSX.Element {
   const [vods, setVods] = useState<Vod[]>([])
   const [loading, setLoading] = useState(true)
   const [selecting, setSelecting] = useState(false)
+  const [selectError, setSelectError] = useState<string | null>(null)
   const [extractingId, setExtractingId] = useState<string | null>(null)
+  const [extractError, setExtractError] = useState<string | null>(null)
   const [transcribingId, setTranscribingId] = useState<string | null>(null)
   const [transcribeError, setTranscribeError] = useState<string | null>(null)
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
@@ -34,9 +36,12 @@ export function Clips(): JSX.Element {
 
   async function handleSelect(): Promise<void> {
     setSelecting(true)
+    setSelectError(null)
     try {
       const vod = await window.commandCenter.vod.selectFile()
       if (vod) setVods((prev) => [vod, ...prev])
+    } catch (err) {
+      setSelectError(err instanceof Error ? err.message : "Couldn't add that file — try again.")
     } finally {
       setSelecting(false)
     }
@@ -44,9 +49,12 @@ export function Clips(): JSX.Element {
 
   async function handleExtract(id: string): Promise<void> {
     setExtractingId(id)
+    setExtractError(null)
     try {
       const updated = await window.commandCenter.vod.extractAudio(id)
       setVods((prev) => prev.map((v) => (v.id === id ? updated : v)))
+    } catch (err) {
+      setExtractError(err instanceof Error ? err.message : "Couldn't extract audio — try again.")
     } finally {
       setExtractingId(null)
     }
@@ -114,12 +122,14 @@ export function Clips(): JSX.Element {
         <p className={styles.hint}>
           Nothing is copied or uploaded — the app only remembers where the file already is on this machine.
         </p>
+        {selectError && <p className={formStyles.error}>{selectError}</p>}
         <button type="button" className={buttonClassName('primary')} onClick={handleSelect} disabled={selecting}>
           {selecting ? 'Waiting for file…' : 'Select a VOD'}
         </button>
       </Card>
 
       <Card title="VOD library" subtitle="Every recording you've added">
+        {extractError && <p className={formStyles.error}>{extractError}</p>}
         {transcribeError && <p className={formStyles.error}>{transcribeError}</p>}
         {analyzeError && <p className={formStyles.error}>{analyzeError}</p>}
         {loading ? (

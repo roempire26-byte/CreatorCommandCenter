@@ -32,14 +32,14 @@ export const ROUTES: RouteDef[] = [
     id: 'content',
     label: 'Content',
     path: '/content',
-    description: 'Clip queue and reviewable drafts',
+    description: 'Manual idea queue and drafts',
     icon: 'stack'
   },
   {
     id: 'clips',
     label: 'Clips',
     path: '/clips',
-    description: 'VOD library and clip candidates',
+    description: 'AI clip suggestions from your VODs',
     icon: 'clip'
   },
   {

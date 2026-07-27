@@ -262,7 +262,7 @@ export function Settings(): JSX.Element {
         )}
       </Card>
 
-      <Card title="Claude API key" subtitle="Stored securely on this machine — not used by anything yet">
+      <Card title="Claude API key" subtitle="Required to generate clip suggestions from a VOD's transcript in Clips">
         <div className={styles.statusRow}>
           <StatusPill
             tone={claudeSettings?.configured ? 'success' : 'neutral'}
@@ -278,8 +278,8 @@ export function Settings(): JSX.Element {
           claudeSettings && (
             <form className={formStyles.form} onSubmit={handleSaveClaudeKey}>
               <p className={styles.hint}>
-                Get a key at <strong>console.anthropic.com</strong>. It's stored encrypted on this machine and never
-                leaves it except when a future clip-analysis feature calls Claude directly.
+                Get a key at <strong>console.anthropic.com</strong>. It's stored encrypted on this machine and only
+                leaves it when you click Analyze on a VOD in Clips — never automatically.
               </p>
               <div className={formStyles.field}>
                 <label className={formStyles.label} htmlFor="claude-api-key">

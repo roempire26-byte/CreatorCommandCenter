@@ -181,3 +181,6 @@ export const vodSchema = createVodSchema.extend({
   updatedAt: z.string()
 })
 export type Vod = z.infer<typeof vodSchema>
+
+export const extractVodAudioSchema = z.object({ id: z.string() })
+export type ExtractVodAudioInput = z.infer<typeof extractVodAudioSchema>

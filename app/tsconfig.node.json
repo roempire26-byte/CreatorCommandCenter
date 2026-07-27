@@ -16,7 +16,8 @@
       "@backend/*": ["../backend/*"],
       "@automation/*": ["../automation/*"],
       "sql.js": ["node_modules/@types/sql.js"],
-      "obs-websocket-js": ["node_modules/obs-websocket-js"]
+      "obs-websocket-js": ["node_modules/obs-websocket-js"],
+      "ffmpeg-static": ["node_modules/ffmpeg-static/types/index.d.ts"]
     }
   },
   "include": [

@@ -1,5 +1,5 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
-import { basename } from 'path'
+import { basename, join } from 'path'
 import { IPC } from '@shared/ipc-channels'
 import {
   connectTwitchSchema,
@@ -10,6 +10,7 @@ import {
   createSessionSchema,
   deleteChecklistItemSchema,
   endSessionSchema,
+  extractVodAudioSchema,
   listMetricSnapshotsSchema,
   saveObsSettingsSchema,
   startSessionSchema,
@@ -26,6 +27,7 @@ import { listActivityLog } from '@database/repositories/activity-log'
 import { createVod, listVods } from '@database/repositories/vods'
 import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
+import { runAudioExtraction } from '@backend/content-intelligence/audio-extraction'
 import { connectTwitch } from '@backend/twitch/oauth'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
@@ -218,4 +220,9 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
   })
 
   ipcMain.handle(IPC.vodList, () => listVods(dbHandle))
+
+  ipcMain.handle(IPC.vodExtractAudio, async (_event, input: unknown) => {
+    const parsed = extractVodAudioSchema.parse(input)
+    return runAudioExtraction(dbHandle, parsed.id, join(userDataDir, 'vod-audio'))
+  })
 }

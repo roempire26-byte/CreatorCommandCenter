@@ -12,6 +12,7 @@ export function Clips(): JSX.Element {
   const [vods, setVods] = useState<Vod[]>([])
   const [loading, setLoading] = useState(true)
   const [selecting, setSelecting] = useState(false)
+  const [extractingId, setExtractingId] = useState<string | null>(null)
 
   useEffect(() => {
     window.commandCenter.vod.list().then((result) => {
@@ -27,6 +28,16 @@ export function Clips(): JSX.Element {
       if (vod) setVods((prev) => [vod, ...prev])
     } finally {
       setSelecting(false)
+    }
+  }
+
+  async function handleExtract(id: string): Promise<void> {
+    setExtractingId(id)
+    try {
+      const updated = await window.commandCenter.vod.extractAudio(id)
+      setVods((prev) => prev.map((v) => (v.id === id ? updated : v)))
+    } finally {
+      setExtractingId(null)
     }
   }
 
@@ -54,7 +65,19 @@ export function Clips(): JSX.Element {
                   <span className={styles.vodFilename}>{vod.filename}</span>
                   <span className={styles.vodMeta}>Added {formatDateTime(vod.createdAt)}</span>
                 </div>
-                <StatusPill tone={vodTone(vod.status)} label={vod.status} />
+                <div className={styles.vodRight}>
+                  {(vod.status === 'pending' || vod.status === 'failed') && (
+                    <button
+                      type="button"
+                      className={buttonClassName('secondary')}
+                      onClick={() => handleExtract(vod.id)}
+                      disabled={extractingId === vod.id}
+                    >
+                      {extractingId === vod.id ? 'Extracting…' : vod.status === 'failed' ? 'Retry' : 'Extract audio'}
+                    </button>
+                  )}
+                  <StatusPill tone={vodTone(vod.status)} label={vod.status} pulse={vod.status === 'processing'} />
+                </div>
               </div>
             ))}
           </div>

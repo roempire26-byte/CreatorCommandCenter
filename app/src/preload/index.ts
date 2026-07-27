@@ -71,7 +71,8 @@ const twitch = {
 
 const vod = {
   selectFile: (): Promise<Vod | null> => ipcRenderer.invoke(IPC.vodSelectFile),
-  list: (): Promise<Vod[]> => ipcRenderer.invoke(IPC.vodList)
+  list: (): Promise<Vod[]> => ipcRenderer.invoke(IPC.vodList),
+  extractAudio: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodExtractAudio, { id })
 }
 
 const api = {

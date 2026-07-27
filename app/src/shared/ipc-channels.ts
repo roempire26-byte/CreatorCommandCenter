@@ -31,6 +31,8 @@ export const IPC = {
   vodExtractAudio: 'vod:extractAudio',
   vodTranscribe: 'vod:transcribe',
   vodAnalyze: 'vod:analyze',
+  clipListForVod: 'clip:listForVod',
+  clipUpdateStatus: 'clip:updateStatus',
   claudeGetSettings: 'claude:getSettings',
   claudeSaveKey: 'claude:saveKey',
   claudeClearKey: 'claude:clearKey',

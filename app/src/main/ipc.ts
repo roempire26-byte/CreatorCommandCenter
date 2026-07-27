@@ -13,11 +13,13 @@ import {
   extractVodAudioSchema,
   listMetricSnapshotsSchema,
   analyzeVodSchema,
+  listClipCandidatesSchema,
   saveClaudeKeySchema,
   saveObsSettingsSchema,
   saveOpenAiKeySchema,
   startSessionSchema,
   transcribeVodSchema,
+  updateClipCandidateStatusSchema,
   updateContentItemStatusSchema
 } from '@shared/schemas'
 import type { DbHandle } from '@database/db'
@@ -29,6 +31,7 @@ import { createMetricSnapshot, listMetricSnapshots, listMetricSnapshotsForSessio
 import { listAutomationRuns } from '@database/repositories/automation-runs'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { createVod, listVods } from '@database/repositories/vods'
+import { listClipCandidatesForVod, updateClipCandidateStatus } from '@database/repositories/clip-candidates'
 import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
 import { runAudioExtraction } from '@backend/content-intelligence/audio-extraction'
@@ -246,6 +249,24 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     const apiKey = getClaudeApiKey(userDataDir)
     if (!apiKey) throw new Error('Add your Claude API key in Settings before analyzing.')
     return runAnalysis(dbHandle, parsed.id, apiKey)
+  })
+
+  ipcMain.handle(IPC.clipListForVod, (_event, input: unknown) => {
+    const parsed = listClipCandidatesSchema.parse(input)
+    return listClipCandidatesForVod(dbHandle, parsed.vodId)
+  })
+
+  ipcMain.handle(IPC.clipUpdateStatus, (_event, input: unknown) => {
+    const parsed = updateClipCandidateStatusSchema.parse(input)
+    const candidate = updateClipCandidateStatus(dbHandle, parsed.id, parsed.status)
+    if (!candidate) throw new Error('Clip candidate not found')
+    logActivity(dbHandle, {
+      category: 'clip',
+      action: parsed.status === 'approved' ? 'candidate-approved' : 'candidate-rejected',
+      status: parsed.status === 'approved' ? 'success' : 'neutral',
+      detail: candidate.title
+    })
+    return candidate
   })
 
   ipcMain.handle(IPC.claudeGetSettings, () => loadClaudeSettings(userDataDir))

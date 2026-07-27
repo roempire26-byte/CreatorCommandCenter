@@ -5,6 +5,7 @@ import type {
   AutomationRun,
   ChecklistItem,
   ClaudeSettings,
+  ClipCandidate,
   ConnectTwitchInput,
   ContentItem,
   CreateChecklistItemInput,
@@ -79,6 +80,12 @@ const vod = {
   analyze: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodAnalyze, { id })
 }
 
+const clip = {
+  listForVod: (vodId: string): Promise<ClipCandidate[]> => ipcRenderer.invoke(IPC.clipListForVod, { vodId }),
+  updateStatus: (id: string, status: 'approved' | 'rejected'): Promise<ClipCandidate> =>
+    ipcRenderer.invoke(IPC.clipUpdateStatus, { id, status })
+}
+
 const claude = {
   getSettings: (): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeGetSettings),
   saveKey: (apiKey: string): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeSaveKey, { apiKey }),
@@ -98,6 +105,7 @@ const api = {
   automation,
   twitch,
   vod,
+  clip,
   claude,
   openai
 }

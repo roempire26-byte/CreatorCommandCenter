@@ -202,3 +202,31 @@ export type TranscribeVodInput = z.infer<typeof transcribeVodSchema>
 
 export const analyzeVodSchema = z.object({ id: z.string() })
 export type AnalyzeVodInput = z.infer<typeof analyzeVodSchema>
+
+export const clipCandidateStatusSchema = z.enum(['recommended', 'approved', 'rejected', 'exported', 'failed'])
+export type ClipCandidateStatus = z.infer<typeof clipCandidateStatusSchema>
+
+export const clipCandidateSchema = z.object({
+  id: z.string(),
+  vodId: z.string(),
+  startSeconds: z.number(),
+  endSeconds: z.number(),
+  title: z.string(),
+  reason: z.string().optional(),
+  status: clipCandidateStatusSchema,
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+export type ClipCandidate = z.infer<typeof clipCandidateSchema>
+
+export const listClipCandidatesSchema = z.object({ vodId: z.string() })
+export type ListClipCandidatesInput = z.infer<typeof listClipCandidatesSchema>
+
+// Review-loop transitions only — approve/reject are the only actions this app builds today,
+// so the boundary deliberately doesn't accept the full ClipCandidateStatus enum ('exported'
+// belongs to a future export flow, 'failed' is set internally by the analysis step).
+export const updateClipCandidateStatusSchema = z.object({
+  id: z.string(),
+  status: z.enum(['approved', 'rejected'])
+})
+export type UpdateClipCandidateStatusInput = z.infer<typeof updateClipCandidateStatusSchema>

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { Card } from '@renderer/components/Card'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
+import { Modal } from '@renderer/components/Modal'
 import { buttonClassName } from '@renderer/components/Button'
-import { vodTone } from '@renderer/lib/statusTones'
-import { formatDateTime } from '@renderer/lib/format'
-import type { Vod } from '@shared/schemas'
+import { clipCandidateTone, vodStatusLabel, vodTone } from '@renderer/lib/statusTones'
+import { formatDateTime, formatTimestamp } from '@renderer/lib/format'
+import type { ClipCandidate, Vod } from '@shared/schemas'
 import formStyles from '@renderer/components/forms/Form.module.css'
 import styles from './Clips.module.css'
 
@@ -18,6 +19,11 @@ export function Clips(): JSX.Element {
   const [transcribeError, setTranscribeError] = useState<string | null>(null)
   const [analyzingId, setAnalyzingId] = useState<string | null>(null)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
+  const [reviewVod, setReviewVod] = useState<Vod | null>(null)
+  const [candidates, setCandidates] = useState<ClipCandidate[]>([])
+  const [candidatesLoading, setCandidatesLoading] = useState(false)
+  const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null)
+  const [candidateError, setCandidateError] = useState<string | null>(null)
 
   useEffect(() => {
     window.commandCenter.vod.list().then((result) => {
@@ -69,6 +75,36 @@ export function Clips(): JSX.Element {
       setAnalyzeError(err instanceof Error ? err.message : "Couldn't analyze — try again.")
     } finally {
       setAnalyzingId(null)
+    }
+  }
+
+  async function handleOpenReview(vod: Vod): Promise<void> {
+    setReviewVod(vod)
+    setCandidateError(null)
+    setCandidatesLoading(true)
+    try {
+      const result = await window.commandCenter.clip.listForVod(vod.id)
+      setCandidates(result)
+    } finally {
+      setCandidatesLoading(false)
+    }
+  }
+
+  function handleCloseReview(): void {
+    setReviewVod(null)
+    setCandidates([])
+  }
+
+  async function handleCandidateStatus(id: string, status: 'approved' | 'rejected'): Promise<void> {
+    setUpdatingCandidateId(id)
+    setCandidateError(null)
+    try {
+      const updated = await window.commandCenter.clip.updateStatus(id, status)
+      setCandidates((prev) => prev.map((c) => (c.id === id ? updated : c)))
+    } catch (err) {
+      setCandidateError(err instanceof Error ? err.message : "Couldn't update — try again.")
+    } finally {
+      setUpdatingCandidateId(null)
     }
   }
 
@@ -129,13 +165,70 @@ export function Clips(): JSX.Element {
                       {analyzingId === vod.id ? 'Analyzing…' : 'Analyze'}
                     </button>
                   )}
-                  <StatusPill tone={vodTone(vod.status)} label={vod.status} pulse={vod.status === 'processing'} />
+                  {vod.status === 'analyzed' && (
+                    <button type="button" className={buttonClassName('secondary')} onClick={() => handleOpenReview(vod)}>
+                      Review clips
+                    </button>
+                  )}
+                  <StatusPill
+                    tone={vodTone(vod.status)}
+                    label={vodStatusLabel(vod)}
+                    pulse={extractingId === vod.id || transcribingId === vod.id || analyzingId === vod.id}
+                  />
                 </div>
               </div>
             ))}
           </div>
         )}
       </Card>
+
+      {reviewVod && (
+        <Modal title={`Clip candidates — ${reviewVod.filename}`} onClose={handleCloseReview}>
+          {candidateError && <p className={formStyles.error}>{candidateError}</p>}
+          {candidatesLoading ? (
+            <p className={styles.hint}>Loading…</p>
+          ) : candidates.length === 0 ? (
+            <EmptyState icon="✂" title="No clip candidates" description="Claude didn't suggest any moments for this recording." />
+          ) : (
+            <div className={styles.candidateList}>
+              {candidates.map((candidate) => (
+                <div className={styles.candidateRow} key={candidate.id}>
+                  <div className={styles.candidateLeft}>
+                    <span className={styles.candidateTitle}>{candidate.title}</span>
+                    {candidate.reason && <span className={styles.candidateReason}>{candidate.reason}</span>}
+                    <span className={styles.candidateMeta}>
+                      {formatTimestamp(candidate.startSeconds)}–{formatTimestamp(candidate.endSeconds)}
+                    </span>
+                  </div>
+                  <div className={styles.candidateRight}>
+                    {candidate.status === 'recommended' && (
+                      <>
+                        <button
+                          type="button"
+                          className={buttonClassName('secondary')}
+                          onClick={() => handleCandidateStatus(candidate.id, 'approved')}
+                          disabled={updatingCandidateId === candidate.id}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className={buttonClassName('danger')}
+                          onClick={() => handleCandidateStatus(candidate.id, 'rejected')}
+                          disabled={updatingCandidateId === candidate.id}
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    <StatusPill tone={clipCandidateTone(candidate.status)} label={candidate.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Modal>
+      )}
     </div>
   )
 }

@@ -18,7 +18,8 @@ import type {
   SaveObsSettingsInput,
   StartSessionInput,
   StreamSession,
-  TwitchSettings
+  TwitchSettings,
+  Vod
 } from '@shared/schemas'
 
 const db = {
@@ -68,12 +69,18 @@ const twitch = {
   disconnect: (): Promise<TwitchSettings> => ipcRenderer.invoke(IPC.twitchDisconnect)
 }
 
+const vod = {
+  selectFile: (): Promise<Vod | null> => ipcRenderer.invoke(IPC.vodSelectFile),
+  list: (): Promise<Vod[]> => ipcRenderer.invoke(IPC.vodList)
+}
+
 const api = {
   appVersion: process.env.npm_package_version ?? '0.1.0',
   db,
   obs,
   automation,
-  twitch
+  twitch,
+  vod
 }
 
 contextBridge.exposeInMainWorld('commandCenter', api)

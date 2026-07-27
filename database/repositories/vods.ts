@@ -1,23 +1,7 @@
 import { randomUUID } from 'crypto'
 import type { DbHandle } from '../db'
 import { mutate, query, saveDatabase } from '../db'
-
-export type VodStatus = 'pending' | 'processing' | 'analyzed' | 'failed'
-
-export interface Vod {
-  id: string
-  filePath: string
-  filename: string
-  status: VodStatus
-  transcript: string | null
-  createdAt: string
-  updatedAt: string
-}
-
-export interface CreateVodInput {
-  filePath: string
-  filename: string
-}
+import type { CreateVodInput, Vod, VodStatus } from '@shared/schemas'
 
 interface VodRow {
   id: string

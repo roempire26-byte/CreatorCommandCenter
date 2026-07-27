@@ -1,4 +1,4 @@
-import type { AutomationRun, ContentItem, StreamSession } from '@shared/schemas'
+import type { AutomationRun, ContentItem, StreamSession, Vod } from '@shared/schemas'
 import type { StatusTone } from '@renderer/components/StatusPill'
 
 export function contentItemTone(status: ContentItem['status']): StatusTone {
@@ -36,6 +36,20 @@ export function automationRunTone(status: AutomationRun['status']): StatusTone {
     case 'failed':
       return 'danger'
     case 'running':
+    default:
+      return 'neutral'
+  }
+}
+
+export function vodTone(status: Vod['status']): StatusTone {
+  switch (status) {
+    case 'analyzed':
+      return 'success'
+    case 'failed':
+      return 'danger'
+    case 'processing':
+      return 'warning'
+    case 'pending':
     default:
       return 'neutral'
   }

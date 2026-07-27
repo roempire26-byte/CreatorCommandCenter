@@ -4,6 +4,7 @@ import { MissionControl } from '@renderer/routes/MissionControl'
 import { Streaming } from '@renderer/routes/Streaming'
 import { Analytics } from '@renderer/routes/Analytics'
 import { Content } from '@renderer/routes/Content'
+import { Clips } from '@renderer/routes/Clips'
 import { Automations } from '@renderer/routes/Automations'
 import { AIWorkspace } from '@renderer/routes/AIWorkspace'
 import { Settings } from '@renderer/routes/Settings'
@@ -17,6 +18,7 @@ export function App(): JSX.Element {
           <Route path="/streaming" element={<Streaming />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/content" element={<Content />} />
+          <Route path="/clips" element={<Clips />} />
           <Route path="/automations" element={<Automations />} />
           <Route path="/ai-workspace" element={<AIWorkspace />} />
           <Route path="/settings" element={<Settings />} />

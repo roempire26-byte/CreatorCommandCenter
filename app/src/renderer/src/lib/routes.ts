@@ -3,7 +3,7 @@ export interface RouteDef {
   label: string
   path: string
   description: string
-  icon: 'grid' | 'broadcast' | 'chart' | 'stack' | 'flow' | 'spark' | 'gear'
+  icon: 'grid' | 'broadcast' | 'chart' | 'stack' | 'flow' | 'spark' | 'gear' | 'clip'
 }
 
 export const ROUTES: RouteDef[] = [
@@ -34,6 +34,13 @@ export const ROUTES: RouteDef[] = [
     path: '/content',
     description: 'Clip queue and reviewable drafts',
     icon: 'stack'
+  },
+  {
+    id: 'clips',
+    label: 'Clips',
+    path: '/clips',
+    description: 'VOD library and clip candidates',
+    icon: 'clip'
   },
   {
     id: 'automations',

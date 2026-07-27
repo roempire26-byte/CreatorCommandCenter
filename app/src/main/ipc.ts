@@ -1,4 +1,5 @@
-import { ipcMain, shell } from 'electron'
+import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import { basename } from 'path'
 import { IPC } from '@shared/ipc-channels'
 import {
   connectTwitchSchema,
@@ -22,6 +23,7 @@ import { createChecklistItem, deleteChecklistItem, listChecklistItems } from '@d
 import { createMetricSnapshot, listMetricSnapshots, listMetricSnapshotsForSession } from '@database/repositories/metric-snapshots'
 import { listAutomationRuns } from '@database/repositories/automation-runs'
 import { listActivityLog } from '@database/repositories/activity-log'
+import { createVod, listVods } from '@database/repositories/vods'
 import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
 import { connectTwitch } from '@backend/twitch/oauth'
@@ -34,6 +36,8 @@ interface RegisterIpcOptions {
   obsAdapter: ObsAdapter
   userDataDir: string
 }
+
+const VOD_FILE_FILTERS = [{ name: 'Video files', extensions: ['mp4', 'mkv', 'mov', 'flv', 'avi', 'webm'] }]
 
 export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: RegisterIpcOptions): void {
   ipcMain.handle(IPC.dbListSessions, () => listSessions(dbHandle))
@@ -197,4 +201,21 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     logActivity(dbHandle, { category: 'twitch', action: 'disconnected', status: 'neutral' })
     return loadTwitchSettings(userDataDir)
   })
+
+  ipcMain.handle(IPC.vodSelectFile, async () => {
+    const window = BrowserWindow.getFocusedWindow()
+    const result = window
+      ? await dialog.showOpenDialog(window, { properties: ['openFile'], filters: VOD_FILE_FILTERS })
+      : await dialog.showOpenDialog({ properties: ['openFile'], filters: VOD_FILE_FILTERS })
+
+    if (result.canceled || result.filePaths.length === 0) return null
+
+    const filePath = result.filePaths[0]
+    const filename = basename(filePath)
+    const vod = createVod(dbHandle, { filePath, filename })
+    logActivity(dbHandle, { category: 'vod', action: 'vod-selected', status: 'success', detail: filename })
+    return vod
+  })
+
+  ipcMain.handle(IPC.vodList, () => listVods(dbHandle))
 }

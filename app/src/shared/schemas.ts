@@ -163,3 +163,21 @@ export const twitchSettingsSchema = z.object({
   redirectUri: z.string()
 })
 export type TwitchSettings = z.infer<typeof twitchSettingsSchema>
+
+export const vodStatusSchema = z.enum(['pending', 'processing', 'analyzed', 'failed'])
+export type VodStatus = z.infer<typeof vodStatusSchema>
+
+export const createVodSchema = z.object({
+  filePath: z.string().trim().min(1),
+  filename: z.string().trim().min(1)
+})
+export type CreateVodInput = z.infer<typeof createVodSchema>
+
+export const vodSchema = createVodSchema.extend({
+  id: z.string(),
+  status: vodStatusSchema,
+  transcript: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+export type Vod = z.infer<typeof vodSchema>

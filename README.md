@@ -4,8 +4,8 @@ Creator Command Center is a private, desktop-first workspace for running a strea
 
 ## Project status
 
-**Stage:** Sprint 5 complete — Content is a real, editable queue and Automations runs a genuine (dry-run, read-only) "content review check" workflow with a full run history  
-**Next milestone:** Sprint 6 — optional AI workspace  
+**Stage:** Sprint 6 in progress — the Twitch OAuth connect/disconnect flow is implemented (loopback authorization flow, encrypted token storage, Settings UI); the follower-count adapter and automatic metric capture (Sprint 6 slices 2–3) are not yet built. Sprint 6.5 (stabilization) is running alongside it — see [`docs/Sprint 6.5.md`](docs/Sprint%206.5.md)  
+**Next milestone:** Finish Sprint 6 (Twitch follower count), then Sprint 7 — optional AI workspace  
 **Primary user:** The project owner (with room to support other creators later)
 
 ## What version 1 will do

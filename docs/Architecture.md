@@ -75,6 +75,35 @@ Owns schemas and migrations for sessions, metrics snapshots, goals, content item
 
 Every external connection implements an adapter contract: `connect`, `getStatus`, `fetchMetrics`, `performAction`, and `disconnect` as applicable. UI code speaks only to the internal service contract, not directly to Twitch, YouTube, TikTok, OBS, or an AI vendor.
 
+### Adapter convention
+
+`backend/obs/adapter.ts`'s `ObsAdapter` is the reference implementation of this contract — not because it's declared to be, but because it's the one adapter that's actually been built and refined across three sprints. Future adapters (a VOD source, an AI provider, a per-platform posting adapter) should read `ObsAdapter` first and follow its shape, rather than each inventing their own.
+
+What `ObsAdapter` actually demonstrates:
+
+- **Connect / reconnect** — `start()`/`stop()`/`reconnect()`, with exponential backoff and jitter on failure, not a bare one-shot connection attempt.
+- **Status as a first-class, cached value** — `getStatus()` returns the adapter's own last-known state synchronously; callers never have to re-derive status from a raw connection object.
+- **Status changes pushed out, not polled** — the adapter takes an `onStatusChange` callback (a constructor option) and calls it on every state transition; see [Live status pattern](#live-status-pattern) below for how that reaches the renderer.
+- **Read vs. write kept separate** — status/scene/stream-state reporting runs unconditionally once connected; write actions (`startStream`/`stopStream`) are separate methods, explicitly guarded on connection state, and never invoked opportunistically.
+- **Errors classified, not swallowed** — connection failures are sorted into meaningful states (`auth-required` vs. `errored` vs. `offline`) rather than one generic "failed," so the UI — and the user — can tell the difference.
+- **Transitions logged** — a `logTransition` callback records state changes to the activity log, with noisy or no-op transitions (e.g. repeated `connecting`) filtered out before they're logged.
+
+A future adapter doesn't need all of these in full — a read-only VOD source adapter may have no write actions at all, and a posting adapter may have no persistent connection to hold open the way a WebSocket does. The convention is the *shape* (settings in, status out, actions gated on real state, errors classified, transitions logged), not a checklist every adapter must satisfy completely.
+
+**This is a convention to follow, not an interface to implement.** There is deliberately no `interface Adapter` or abstract base class anywhere in the codebase, and none should be added on the strength of this section alone — that would be exactly the kind of abstraction built ahead of need this project has avoided so far (see `automation/`'s pure-workflow split, added only when Sprint 5 actually needed it, not pre-built). Write the next adapter to look like `ObsAdapter`; formalize a shared interface later, if and only if three or four real adapters exist and the duplication is actually costing something.
+
+## Live status pattern
+
+`useObsStatus` (`app/src/renderer/src/lib/useObsStatus.ts`) is the existing example of how live, in-progress state reaches the UI without polling:
+
+1. The main process holds the current state (`ObsAdapter`'s cached status) and pushes it to the renderer over IPC whenever it changes — `mainWindow.webContents.send(IPC.obsStatusChanged, status)`, wired up once in `app/src/main/index.ts`.
+2. The preload script exposes a matching subscribe method on `window.commandCenter` (`obs.onStatusChange`), alongside a one-shot `getStatus()` for the initial value.
+3. A small renderer-side hook (`useObsStatus`) fetches the initial value once, subscribes to the push channel, and returns the live value — any component that calls the hook re-renders automatically as state changes, with no polling loop anywhere in the renderer.
+
+Future pipeline-stage screens — VOD processing progress, AI analysis progress, a scheduled-post queue — should follow this same shape when they need live status: a small `use<Domain>Status`-style hook in `lib/`, fed by a push-based IPC event from the main process, mirroring `useObsStatus`'s handful of lines almost exactly.
+
+**No shared state framework is being introduced.** This is one small hook per domain that needs live status, not a generic pub/sub layer, store, or context provider. Most of this app's screens don't need this pattern at all — they fetch once in a `useEffect` and that's the right choice when nothing changes underneath them while the screen is open (Content, Automations, and Analytics all do this today, correctly). Reach for the push-plus-hook shape only for state that's genuinely live while the user is looking at it — the same reason `useObsStatus` needed it and a one-time content list doesn't.
+
 ## Scheduled execution model
 
 Decided in [Sprint 6.5](Sprint%206.5.md), task C2, ahead of Content Intelligence needing it for scheduled clip posting. This is the first feature to require a time-based trigger rather than a synchronous, in-the-moment user action — every write action built so far (OBS start/stop) fires immediately when clicked, gated by a confirmation dialog at that instant. Scheduling breaks that pattern: the approval happens once, up front, and the action fires later, possibly with nobody watching.

@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, session, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { is } from './is'
 import { openDatabase, type DbHandle } from '@database/db'
@@ -75,6 +75,14 @@ async function bootstrap(dbHandle: DbHandle): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  // Deny every permission request by default — the app requests none of these today
+  // (no camera/mic/notifications/geolocation/etc.), so this only guards against an
+  // unexpected future request (e.g. from an embedded AI provider SDK) silently falling
+  // through to Electron's default behavior instead of being explicitly refused.
+  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    callback(false)
+  })
+
   const dbHandle = await openDatabase(app.getPath('userData'))
   await bootstrap(dbHandle)
 })

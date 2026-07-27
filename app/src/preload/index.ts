@@ -75,7 +75,8 @@ const vod = {
   selectFile: (): Promise<Vod | null> => ipcRenderer.invoke(IPC.vodSelectFile),
   list: (): Promise<Vod[]> => ipcRenderer.invoke(IPC.vodList),
   extractAudio: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodExtractAudio, { id }),
-  transcribe: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodTranscribe, { id })
+  transcribe: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodTranscribe, { id }),
+  analyze: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodAnalyze, { id })
 }
 
 const claude = {

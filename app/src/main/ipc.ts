@@ -12,6 +12,7 @@ import {
   endSessionSchema,
   extractVodAudioSchema,
   listMetricSnapshotsSchema,
+  analyzeVodSchema,
   saveClaudeKeySchema,
   saveObsSettingsSchema,
   saveOpenAiKeySchema,
@@ -32,11 +33,12 @@ import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
 import { runAudioExtraction } from '@backend/content-intelligence/audio-extraction'
 import { runTranscription } from '@backend/content-intelligence/transcription'
+import { runAnalysis } from '@backend/content-intelligence/analysis'
 import { connectTwitch } from '@backend/twitch/oauth'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
 import { clearTwitchConnection, loadTwitchSettings, saveTwitchConnection } from './twitch-settings'
-import { clearClaudeApiKey, loadClaudeSettings, saveClaudeApiKey } from './claude-settings'
+import { clearClaudeApiKey, getClaudeApiKey, loadClaudeSettings, saveClaudeApiKey } from './claude-settings'
 import { clearOpenAiApiKey, getOpenAiApiKey, loadOpenAiSettings, saveOpenAiApiKey } from './openai-settings'
 
 interface RegisterIpcOptions {
@@ -237,6 +239,13 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     const apiKey = getOpenAiApiKey(userDataDir)
     if (!apiKey) throw new Error('Add your OpenAI API key in Settings before transcribing.')
     return runTranscription(dbHandle, parsed.id, join(userDataDir, 'vod-audio'), apiKey)
+  })
+
+  ipcMain.handle(IPC.vodAnalyze, async (_event, input: unknown) => {
+    const parsed = analyzeVodSchema.parse(input)
+    const apiKey = getClaudeApiKey(userDataDir)
+    if (!apiKey) throw new Error('Add your Claude API key in Settings before analyzing.')
+    return runAnalysis(dbHandle, parsed.id, apiKey)
   })
 
   ipcMain.handle(IPC.claudeGetSettings, () => loadClaudeSettings(userDataDir))

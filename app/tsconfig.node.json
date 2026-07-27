@@ -18,7 +18,10 @@
       "@content-intelligence/*": ["../content-intelligence/*"],
       "sql.js": ["node_modules/@types/sql.js"],
       "obs-websocket-js": ["node_modules/obs-websocket-js"],
-      "ffmpeg-static": ["node_modules/ffmpeg-static/types/index.d.ts"]
+      "ffmpeg-static": ["node_modules/ffmpeg-static/types/index.d.ts"],
+      "zod": ["node_modules/zod"],
+      "@anthropic-ai/sdk": ["node_modules/@anthropic-ai/sdk"],
+      "@anthropic-ai/sdk/*": ["node_modules/@anthropic-ai/sdk/*"]
     }
   },
   "include": [

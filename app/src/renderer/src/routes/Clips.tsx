@@ -16,6 +16,8 @@ export function Clips(): JSX.Element {
   const [extractingId, setExtractingId] = useState<string | null>(null)
   const [transcribingId, setTranscribingId] = useState<string | null>(null)
   const [transcribeError, setTranscribeError] = useState<string | null>(null)
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null)
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null)
 
   useEffect(() => {
     window.commandCenter.vod.list().then((result) => {
@@ -57,6 +59,19 @@ export function Clips(): JSX.Element {
     }
   }
 
+  async function handleAnalyze(id: string): Promise<void> {
+    setAnalyzingId(id)
+    setAnalyzeError(null)
+    try {
+      const updated = await window.commandCenter.vod.analyze(id)
+      setVods((prev) => prev.map((v) => (v.id === id ? updated : v)))
+    } catch (err) {
+      setAnalyzeError(err instanceof Error ? err.message : "Couldn't analyze — try again.")
+    } finally {
+      setAnalyzingId(null)
+    }
+  }
+
   return (
     <div className={styles.wrap}>
       <Card title="Select a recording" subtitle="Pick a local video file to add it to your VOD library">
@@ -70,6 +85,7 @@ export function Clips(): JSX.Element {
 
       <Card title="VOD library" subtitle="Every recording you've added">
         {transcribeError && <p className={formStyles.error}>{transcribeError}</p>}
+        {analyzeError && <p className={formStyles.error}>{analyzeError}</p>}
         {loading ? (
           <p className={styles.hint}>Loading…</p>
         ) : vods.length === 0 ? (
@@ -101,6 +117,16 @@ export function Clips(): JSX.Element {
                       disabled={transcribingId === vod.id}
                     >
                       {transcribingId === vod.id ? 'Transcribing…' : 'Transcribe'}
+                    </button>
+                  )}
+                  {vod.status === 'processing' && vod.transcript != null && (
+                    <button
+                      type="button"
+                      className={buttonClassName('secondary')}
+                      onClick={() => handleAnalyze(vod.id)}
+                      disabled={analyzingId === vod.id}
+                    >
+                      {analyzingId === vod.id ? 'Analyzing…' : 'Analyze'}
                     </button>
                   )}
                   <StatusPill tone={vodTone(vod.status)} label={vod.status} pulse={vod.status === 'processing'} />

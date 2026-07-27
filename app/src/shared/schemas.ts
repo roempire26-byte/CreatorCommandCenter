@@ -199,3 +199,6 @@ export type SaveOpenAiKeyInput = z.infer<typeof saveOpenAiKeySchema>
 
 export const transcribeVodSchema = z.object({ id: z.string() })
 export type TranscribeVodInput = z.infer<typeof transcribeVodSchema>
+
+export const analyzeVodSchema = z.object({ id: z.string() })
+export type AnalyzeVodInput = z.infer<typeof analyzeVodSchema>

@@ -30,6 +30,7 @@ export const IPC = {
   vodList: 'vod:list',
   vodExtractAudio: 'vod:extractAudio',
   vodTranscribe: 'vod:transcribe',
+  vodAnalyze: 'vod:analyze',
   claudeGetSettings: 'claude:getSettings',
   claudeSaveKey: 'claude:saveKey',
   claudeClearKey: 'claude:clearKey',

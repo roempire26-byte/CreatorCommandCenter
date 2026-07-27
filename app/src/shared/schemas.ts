@@ -184,3 +184,9 @@ export type Vod = z.infer<typeof vodSchema>
 
 export const extractVodAudioSchema = z.object({ id: z.string() })
 export type ExtractVodAudioInput = z.infer<typeof extractVodAudioSchema>
+
+export const claudeSettingsSchema = z.object({ configured: z.boolean() })
+export type ClaudeSettings = z.infer<typeof claudeSettingsSchema>
+
+export const saveClaudeKeySchema = z.object({ apiKey: z.string().trim().min(1).max(500) })
+export type SaveClaudeKeyInput = z.infer<typeof saveClaudeKeySchema>

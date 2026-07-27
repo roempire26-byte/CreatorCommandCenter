@@ -12,6 +12,7 @@ import {
   endSessionSchema,
   extractVodAudioSchema,
   listMetricSnapshotsSchema,
+  saveClaudeKeySchema,
   saveObsSettingsSchema,
   startSessionSchema,
   updateContentItemStatusSchema
@@ -32,6 +33,7 @@ import { connectTwitch } from '@backend/twitch/oauth'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
 import { clearTwitchConnection, loadTwitchSettings, saveTwitchConnection } from './twitch-settings'
+import { clearClaudeApiKey, loadClaudeSettings, saveClaudeApiKey } from './claude-settings'
 
 interface RegisterIpcOptions {
   dbHandle: DbHandle
@@ -224,5 +226,26 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
   ipcMain.handle(IPC.vodExtractAudio, async (_event, input: unknown) => {
     const parsed = extractVodAudioSchema.parse(input)
     return runAudioExtraction(dbHandle, parsed.id, join(userDataDir, 'vod-audio'))
+  })
+
+  ipcMain.handle(IPC.claudeGetSettings, () => loadClaudeSettings(userDataDir))
+
+  ipcMain.handle(IPC.claudeSaveKey, (_event, input: unknown) => {
+    const parsed = saveClaudeKeySchema.parse(input)
+    try {
+      saveClaudeApiKey(userDataDir, parsed.apiKey)
+      logActivity(dbHandle, { category: 'claude', action: 'key-saved', status: 'success' })
+      return loadClaudeSettings(userDataDir)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      logActivity(dbHandle, { category: 'claude', action: 'key-save-failed', status: 'danger', detail })
+      throw error
+    }
+  })
+
+  ipcMain.handle(IPC.claudeClearKey, () => {
+    clearClaudeApiKey(userDataDir)
+    logActivity(dbHandle, { category: 'claude', action: 'key-cleared', status: 'neutral' })
+    return loadClaudeSettings(userDataDir)
   })
 }

@@ -4,7 +4,7 @@ import { buttonClassName } from '@renderer/components/Button'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { useObsStatus } from '@renderer/lib/useObsStatus'
 import { obsStatusDisplay } from '@renderer/lib/obsStatusDisplay'
-import type { ObsSettings, TwitchSettings } from '@shared/schemas'
+import type { ClaudeSettings, ObsSettings, TwitchSettings } from '@shared/schemas'
 import formStyles from '@renderer/components/forms/Form.module.css'
 import styles from './Settings.module.css'
 
@@ -25,6 +25,11 @@ export function Settings(): JSX.Element {
   const [twitchError, setTwitchError] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
 
+  const [claudeSettings, setClaudeSettings] = useState<ClaudeSettings | null>(null)
+  const [claudeApiKey, setClaudeApiKey] = useState('')
+  const [claudeError, setClaudeError] = useState<string | null>(null)
+  const [savingClaudeKey, setSavingClaudeKey] = useState(false)
+
   useEffect(() => {
     window.commandCenter.obs.getSettings().then((current) => {
       setSettings(current)
@@ -35,6 +40,7 @@ export function Settings(): JSX.Element {
       setTwitchSettings(current)
       setClientId(current.clientId ?? '')
     })
+    window.commandCenter.claude.getSettings().then(setClaudeSettings)
   }, [])
 
   async function handleSubmit(event: FormEvent): Promise<void> {
@@ -86,6 +92,31 @@ export function Settings(): JSX.Element {
   async function handleTwitchDisconnect(): Promise<void> {
     const updated = await window.commandCenter.twitch.disconnect()
     setTwitchSettings(updated)
+  }
+
+  async function handleSaveClaudeKey(event: FormEvent): Promise<void> {
+    event.preventDefault()
+    if (!claudeApiKey.trim()) {
+      setClaudeError('Enter your Claude API key.')
+      return
+    }
+
+    setSavingClaudeKey(true)
+    setClaudeError(null)
+    try {
+      const updated = await window.commandCenter.claude.saveKey(claudeApiKey.trim())
+      setClaudeSettings(updated)
+      setClaudeApiKey('')
+    } catch (err) {
+      setClaudeError(err instanceof Error ? err.message : "Couldn't save the key — try again.")
+    } finally {
+      setSavingClaudeKey(false)
+    }
+  }
+
+  async function handleClearClaudeKey(): Promise<void> {
+    const updated = await window.commandCenter.claude.clearKey()
+    setClaudeSettings(updated)
   }
 
   return (
@@ -200,6 +231,52 @@ export function Settings(): JSX.Element {
         )}
       </Card>
 
+      <Card title="Claude API key" subtitle="Stored securely on this machine — not used by anything yet">
+        <div className={styles.statusRow}>
+          <StatusPill
+            tone={claudeSettings?.configured ? 'success' : 'neutral'}
+            label={claudeSettings?.configured ? 'Configured' : 'Not configured'}
+          />
+        </div>
+
+        {claudeSettings?.configured ? (
+          <button type="button" className={buttonClassName('secondary')} onClick={handleClearClaudeKey}>
+            Clear key
+          </button>
+        ) : (
+          claudeSettings && (
+            <form className={formStyles.form} onSubmit={handleSaveClaudeKey}>
+              <p className={styles.hint}>
+                Get a key at <strong>console.anthropic.com</strong>. It's stored encrypted on this machine and never
+                leaves it except when a future clip-analysis feature calls Claude directly.
+              </p>
+              <div className={formStyles.field}>
+                <label className={formStyles.label} htmlFor="claude-api-key">
+                  API key
+                </label>
+                <input
+                  id="claude-api-key"
+                  type="password"
+                  className={formStyles.input}
+                  value={claudeApiKey}
+                  onChange={(e) => setClaudeApiKey(e.target.value)}
+                  autoComplete="off"
+                  required
+                />
+              </div>
+
+              {claudeError && <span className={formStyles.error}>{claudeError}</span>}
+
+              <div className={formStyles.actions}>
+                <button type="submit" className={buttonClassName('primary')} disabled={savingClaudeKey}>
+                  {savingClaudeKey ? 'Saving…' : 'Save key'}
+                </button>
+              </div>
+            </form>
+          )
+        )}
+      </Card>
+
       <Card title="What's coming" subtitle="Planned in later sprints">
         <div className={styles.upcoming}>
           <div className={styles.upcomingItem}>
@@ -212,7 +289,7 @@ export function Settings(): JSX.Element {
           </div>
           <div className={styles.upcomingItem}>
             <span className={styles.upcomingSprint}>Sprint 7</span>
-            <span>AI provider settings, budget visibility, and privacy controls</span>
+            <span>Budget visibility and usage controls for the Claude connection above</span>
           </div>
         </div>
       </Card>

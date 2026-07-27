@@ -28,5 +28,8 @@ export const IPC = {
   twitchDisconnect: 'twitch:disconnect',
   vodSelectFile: 'vod:selectFile',
   vodList: 'vod:list',
-  vodExtractAudio: 'vod:extractAudio'
+  vodExtractAudio: 'vod:extractAudio',
+  claudeGetSettings: 'claude:getSettings',
+  claudeSaveKey: 'claude:saveKey',
+  claudeClearKey: 'claude:clearKey'
 } as const

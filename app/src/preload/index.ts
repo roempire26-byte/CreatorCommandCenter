@@ -4,6 +4,7 @@ import type {
   ActivityLogEntry,
   AutomationRun,
   ChecklistItem,
+  ClaudeSettings,
   ConnectTwitchInput,
   ContentItem,
   CreateChecklistItemInput,
@@ -75,13 +76,20 @@ const vod = {
   extractAudio: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodExtractAudio, { id })
 }
 
+const claude = {
+  getSettings: (): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeGetSettings),
+  saveKey: (apiKey: string): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeSaveKey, { apiKey }),
+  clearKey: (): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeClearKey)
+}
+
 const api = {
   appVersion: process.env.npm_package_version ?? '0.1.0',
   db,
   obs,
   automation,
   twitch,
-  vod
+  vod,
+  claude
 }
 
 contextBridge.exposeInMainWorld('commandCenter', api)

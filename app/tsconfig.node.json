@@ -15,6 +15,7 @@
       "@database/*": ["../database/*"],
       "@backend/*": ["../backend/*"],
       "@automation/*": ["../automation/*"],
+      "@content-intelligence/*": ["../content-intelligence/*"],
       "sql.js": ["node_modules/@types/sql.js"],
       "obs-websocket-js": ["node_modules/obs-websocket-js"],
       "ffmpeg-static": ["node_modules/ffmpeg-static/types/index.d.ts"]
@@ -27,6 +28,7 @@
     "src/shared/**/*",
     "../database/**/*",
     "../backend/**/*",
-    "../automation/**/*"
+    "../automation/**/*",
+    "../content-intelligence/**/*"
   ]
 }

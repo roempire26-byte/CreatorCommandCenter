@@ -6,6 +6,7 @@ import { buttonClassName } from '@renderer/components/Button'
 import { vodTone } from '@renderer/lib/statusTones'
 import { formatDateTime } from '@renderer/lib/format'
 import type { Vod } from '@shared/schemas'
+import formStyles from '@renderer/components/forms/Form.module.css'
 import styles from './Clips.module.css'
 
 export function Clips(): JSX.Element {
@@ -13,6 +14,8 @@ export function Clips(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [selecting, setSelecting] = useState(false)
   const [extractingId, setExtractingId] = useState<string | null>(null)
+  const [transcribingId, setTranscribingId] = useState<string | null>(null)
+  const [transcribeError, setTranscribeError] = useState<string | null>(null)
 
   useEffect(() => {
     window.commandCenter.vod.list().then((result) => {
@@ -41,6 +44,19 @@ export function Clips(): JSX.Element {
     }
   }
 
+  async function handleTranscribe(id: string): Promise<void> {
+    setTranscribingId(id)
+    setTranscribeError(null)
+    try {
+      const updated = await window.commandCenter.vod.transcribe(id)
+      setVods((prev) => prev.map((v) => (v.id === id ? updated : v)))
+    } catch (err) {
+      setTranscribeError(err instanceof Error ? err.message : "Couldn't transcribe — try again.")
+    } finally {
+      setTranscribingId(null)
+    }
+  }
+
   return (
     <div className={styles.wrap}>
       <Card title="Select a recording" subtitle="Pick a local video file to add it to your VOD library">
@@ -53,6 +69,7 @@ export function Clips(): JSX.Element {
       </Card>
 
       <Card title="VOD library" subtitle="Every recording you've added">
+        {transcribeError && <p className={formStyles.error}>{transcribeError}</p>}
         {loading ? (
           <p className={styles.hint}>Loading…</p>
         ) : vods.length === 0 ? (
@@ -74,6 +91,16 @@ export function Clips(): JSX.Element {
                       disabled={extractingId === vod.id}
                     >
                       {extractingId === vod.id ? 'Extracting…' : vod.status === 'failed' ? 'Retry' : 'Extract audio'}
+                    </button>
+                  )}
+                  {vod.status === 'processing' && vod.transcript == null && (
+                    <button
+                      type="button"
+                      className={buttonClassName('secondary')}
+                      onClick={() => handleTranscribe(vod.id)}
+                      disabled={transcribingId === vod.id}
+                    >
+                      {transcribingId === vod.id ? 'Transcribing…' : 'Transcribe'}
                     </button>
                   )}
                   <StatusPill tone={vodTone(vod.status)} label={vod.status} pulse={vod.status === 'processing'} />

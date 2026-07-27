@@ -7,12 +7,21 @@ import { getVod, updateVodStatus } from '@database/repositories/vods'
 import type { Vod } from '@shared/schemas'
 import { logActivity } from '../activity-log'
 
-// The extracted audio file lives at <userData>/vod-audio/<vodId>.wav — deterministic from the
+// The extracted audio file lives at <userData>/vod-audio/<vodId>.mp3 — deterministic from the
 // VOD's id, so nothing about its location needs to be persisted in the database. Re-running
 // extraction on the same VOD overwrites the file in place (`-y`); nothing currently deletes it
-// once a VOD is done with it, since the transcription step (a later slice) still needs to read it.
+// once a VOD is done with it, since the transcription step still needs to read it.
+//
+// MP3, not WAV: Task 3 originally chose raw 16kHz PCM WAV as "provider-agnostic," but that
+// produces ~112.5MB/hour — OpenAI Whisper's API (the provider Task 5 settled on) caps requests
+// at 25MB, which raw WAV would blow past at around 13 minutes of audio. 32kbps mono MP3 covers
+// roughly 100 minutes instead. This is a real, documented limit for this slice, not an oversight
+// — longer VODs need chunking (splitting audio into sub-requests and stitching timestamps with
+// offsets), which is a deliberate, deferred future enhancement, not built here. This change only
+// affects the generated audio file's format/path; it never touches `vods.file_path` (the
+// original video the user selected), which is untouched by this revision.
 export function getVodAudioPath(audioDir: string, vodId: string): string {
-  return join(audioDir, `${vodId}.wav`)
+  return join(audioDir, `${vodId}.mp3`)
 }
 
 async function runFfmpegExtractAudio(inputPath: string, outputPath: string): Promise<void> {
@@ -22,9 +31,8 @@ async function runFfmpegExtractAudio(inputPath: string, outputPath: string): Pro
   await mkdir(dirname(outputPath), { recursive: true })
 
   await new Promise<void>((resolve, reject) => {
-    // Mono, 16kHz, 16-bit PCM WAV — a plain, provider-agnostic format any speech-to-text
-    // service or library can consume, independent of which one gets chosen later.
-    const args = ['-y', '-i', inputPath, '-vn', '-ac', '1', '-ar', '16000', '-acodec', 'pcm_s16le', outputPath]
+    // Mono, 16kHz, 32kbps MP3 — see the module-level comment above for why MP3 over WAV.
+    const args = ['-y', '-i', inputPath, '-vn', '-ac', '1', '-ar', '16000', '-acodec', 'libmp3lame', '-b:a', '32k', outputPath]
     const proc = spawn(ffmpegPath as string, args)
 
     let stderr = ''

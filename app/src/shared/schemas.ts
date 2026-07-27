@@ -190,3 +190,12 @@ export type ClaudeSettings = z.infer<typeof claudeSettingsSchema>
 
 export const saveClaudeKeySchema = z.object({ apiKey: z.string().trim().min(1).max(500) })
 export type SaveClaudeKeyInput = z.infer<typeof saveClaudeKeySchema>
+
+export const openaiSettingsSchema = z.object({ configured: z.boolean() })
+export type OpenAiSettings = z.infer<typeof openaiSettingsSchema>
+
+export const saveOpenAiKeySchema = z.object({ apiKey: z.string().trim().min(1).max(500) })
+export type SaveOpenAiKeyInput = z.infer<typeof saveOpenAiKeySchema>
+
+export const transcribeVodSchema = z.object({ id: z.string() })
+export type TranscribeVodInput = z.infer<typeof transcribeVodSchema>

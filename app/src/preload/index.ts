@@ -16,6 +16,7 @@ import type {
   MetricSnapshot,
   ObsSettings,
   ObsStatus,
+  OpenAiSettings,
   SaveObsSettingsInput,
   StartSessionInput,
   StreamSession,
@@ -73,13 +74,20 @@ const twitch = {
 const vod = {
   selectFile: (): Promise<Vod | null> => ipcRenderer.invoke(IPC.vodSelectFile),
   list: (): Promise<Vod[]> => ipcRenderer.invoke(IPC.vodList),
-  extractAudio: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodExtractAudio, { id })
+  extractAudio: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodExtractAudio, { id }),
+  transcribe: (id: string): Promise<Vod> => ipcRenderer.invoke(IPC.vodTranscribe, { id })
 }
 
 const claude = {
   getSettings: (): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeGetSettings),
   saveKey: (apiKey: string): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeSaveKey, { apiKey }),
   clearKey: (): Promise<ClaudeSettings> => ipcRenderer.invoke(IPC.claudeClearKey)
+}
+
+const openai = {
+  getSettings: (): Promise<OpenAiSettings> => ipcRenderer.invoke(IPC.openaiGetSettings),
+  saveKey: (apiKey: string): Promise<OpenAiSettings> => ipcRenderer.invoke(IPC.openaiSaveKey, { apiKey }),
+  clearKey: (): Promise<OpenAiSettings> => ipcRenderer.invoke(IPC.openaiClearKey)
 }
 
 const api = {
@@ -89,7 +97,8 @@ const api = {
   automation,
   twitch,
   vod,
-  claude
+  claude,
+  openai
 }
 
 contextBridge.exposeInMainWorld('commandCenter', api)

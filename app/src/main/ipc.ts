@@ -14,7 +14,9 @@ import {
   listMetricSnapshotsSchema,
   saveClaudeKeySchema,
   saveObsSettingsSchema,
+  saveOpenAiKeySchema,
   startSessionSchema,
+  transcribeVodSchema,
   updateContentItemStatusSchema
 } from '@shared/schemas'
 import type { DbHandle } from '@database/db'
@@ -29,11 +31,13 @@ import { createVod, listVods } from '@database/repositories/vods'
 import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
 import { runAudioExtraction } from '@backend/content-intelligence/audio-extraction'
+import { runTranscription } from '@backend/content-intelligence/transcription'
 import { connectTwitch } from '@backend/twitch/oauth'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
 import { clearTwitchConnection, loadTwitchSettings, saveTwitchConnection } from './twitch-settings'
 import { clearClaudeApiKey, loadClaudeSettings, saveClaudeApiKey } from './claude-settings'
+import { clearOpenAiApiKey, getOpenAiApiKey, loadOpenAiSettings, saveOpenAiApiKey } from './openai-settings'
 
 interface RegisterIpcOptions {
   dbHandle: DbHandle
@@ -228,6 +232,13 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     return runAudioExtraction(dbHandle, parsed.id, join(userDataDir, 'vod-audio'))
   })
 
+  ipcMain.handle(IPC.vodTranscribe, async (_event, input: unknown) => {
+    const parsed = transcribeVodSchema.parse(input)
+    const apiKey = getOpenAiApiKey(userDataDir)
+    if (!apiKey) throw new Error('Add your OpenAI API key in Settings before transcribing.')
+    return runTranscription(dbHandle, parsed.id, join(userDataDir, 'vod-audio'), apiKey)
+  })
+
   ipcMain.handle(IPC.claudeGetSettings, () => loadClaudeSettings(userDataDir))
 
   ipcMain.handle(IPC.claudeSaveKey, (_event, input: unknown) => {
@@ -247,5 +258,26 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
     clearClaudeApiKey(userDataDir)
     logActivity(dbHandle, { category: 'claude', action: 'key-cleared', status: 'neutral' })
     return loadClaudeSettings(userDataDir)
+  })
+
+  ipcMain.handle(IPC.openaiGetSettings, () => loadOpenAiSettings(userDataDir))
+
+  ipcMain.handle(IPC.openaiSaveKey, (_event, input: unknown) => {
+    const parsed = saveOpenAiKeySchema.parse(input)
+    try {
+      saveOpenAiApiKey(userDataDir, parsed.apiKey)
+      logActivity(dbHandle, { category: 'openai', action: 'key-saved', status: 'success' })
+      return loadOpenAiSettings(userDataDir)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      logActivity(dbHandle, { category: 'openai', action: 'key-save-failed', status: 'danger', detail })
+      throw error
+    }
+  })
+
+  ipcMain.handle(IPC.openaiClearKey, () => {
+    clearOpenAiApiKey(userDataDir)
+    logActivity(dbHandle, { category: 'openai', action: 'key-cleared', status: 'neutral' })
+    return loadOpenAiSettings(userDataDir)
   })
 }

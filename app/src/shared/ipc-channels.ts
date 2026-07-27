@@ -29,7 +29,11 @@ export const IPC = {
   vodSelectFile: 'vod:selectFile',
   vodList: 'vod:list',
   vodExtractAudio: 'vod:extractAudio',
+  vodTranscribe: 'vod:transcribe',
   claudeGetSettings: 'claude:getSettings',
   claudeSaveKey: 'claude:saveKey',
-  claudeClearKey: 'claude:clearKey'
+  claudeClearKey: 'claude:clearKey',
+  openaiGetSettings: 'openai:getSettings',
+  openaiSaveKey: 'openai:saveKey',
+  openaiClearKey: 'openai:clearKey'
 } as const

@@ -4,7 +4,7 @@ import { buttonClassName } from '@renderer/components/Button'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { useObsStatus } from '@renderer/lib/useObsStatus'
 import { obsStatusDisplay } from '@renderer/lib/obsStatusDisplay'
-import type { ClaudeSettings, ObsSettings, TwitchSettings } from '@shared/schemas'
+import type { ClaudeSettings, ObsSettings, OpenAiSettings, TwitchSettings } from '@shared/schemas'
 import formStyles from '@renderer/components/forms/Form.module.css'
 import styles from './Settings.module.css'
 
@@ -30,6 +30,11 @@ export function Settings(): JSX.Element {
   const [claudeError, setClaudeError] = useState<string | null>(null)
   const [savingClaudeKey, setSavingClaudeKey] = useState(false)
 
+  const [openaiSettings, setOpenaiSettings] = useState<OpenAiSettings | null>(null)
+  const [openaiApiKey, setOpenaiApiKey] = useState('')
+  const [openaiError, setOpenaiError] = useState<string | null>(null)
+  const [savingOpenaiKey, setSavingOpenaiKey] = useState(false)
+
   useEffect(() => {
     window.commandCenter.obs.getSettings().then((current) => {
       setSettings(current)
@@ -41,6 +46,7 @@ export function Settings(): JSX.Element {
       setClientId(current.clientId ?? '')
     })
     window.commandCenter.claude.getSettings().then(setClaudeSettings)
+    window.commandCenter.openai.getSettings().then(setOpenaiSettings)
   }, [])
 
   async function handleSubmit(event: FormEvent): Promise<void> {
@@ -117,6 +123,31 @@ export function Settings(): JSX.Element {
   async function handleClearClaudeKey(): Promise<void> {
     const updated = await window.commandCenter.claude.clearKey()
     setClaudeSettings(updated)
+  }
+
+  async function handleSaveOpenaiKey(event: FormEvent): Promise<void> {
+    event.preventDefault()
+    if (!openaiApiKey.trim()) {
+      setOpenaiError('Enter your OpenAI API key.')
+      return
+    }
+
+    setSavingOpenaiKey(true)
+    setOpenaiError(null)
+    try {
+      const updated = await window.commandCenter.openai.saveKey(openaiApiKey.trim())
+      setOpenaiSettings(updated)
+      setOpenaiApiKey('')
+    } catch (err) {
+      setOpenaiError(err instanceof Error ? err.message : "Couldn't save the key — try again.")
+    } finally {
+      setSavingOpenaiKey(false)
+    }
+  }
+
+  async function handleClearOpenaiKey(): Promise<void> {
+    const updated = await window.commandCenter.openai.clearKey()
+    setOpenaiSettings(updated)
   }
 
   return (
@@ -270,6 +301,52 @@ export function Settings(): JSX.Element {
               <div className={formStyles.actions}>
                 <button type="submit" className={buttonClassName('primary')} disabled={savingClaudeKey}>
                   {savingClaudeKey ? 'Saving…' : 'Save key'}
+                </button>
+              </div>
+            </form>
+          )
+        )}
+      </Card>
+
+      <Card title="OpenAI API key" subtitle="Used to transcribe VOD audio — text only, nothing else is sent">
+        <div className={styles.statusRow}>
+          <StatusPill
+            tone={openaiSettings?.configured ? 'success' : 'neutral'}
+            label={openaiSettings?.configured ? 'Configured' : 'Not configured'}
+          />
+        </div>
+
+        {openaiSettings?.configured ? (
+          <button type="button" className={buttonClassName('secondary')} onClick={handleClearOpenaiKey}>
+            Clear key
+          </button>
+        ) : (
+          openaiSettings && (
+            <form className={formStyles.form} onSubmit={handleSaveOpenaiKey}>
+              <p className={styles.hint}>
+                Get a key at <strong>platform.openai.com</strong>. It's stored encrypted on this machine and only
+                leaves it when you click Transcribe on a VOD in Clips — never automatically.
+              </p>
+              <div className={formStyles.field}>
+                <label className={formStyles.label} htmlFor="openai-api-key">
+                  API key
+                </label>
+                <input
+                  id="openai-api-key"
+                  type="password"
+                  className={formStyles.input}
+                  value={openaiApiKey}
+                  onChange={(e) => setOpenaiApiKey(e.target.value)}
+                  autoComplete="off"
+                  required
+                />
+              </div>
+
+              {openaiError && <span className={formStyles.error}>{openaiError}</span>}
+
+              <div className={formStyles.actions}>
+                <button type="submit" className={buttonClassName('primary')} disabled={savingOpenaiKey}>
+                  {savingOpenaiKey ? 'Saving…' : 'Save key'}
                 </button>
               </div>
             </form>

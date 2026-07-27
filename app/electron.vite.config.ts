@@ -6,7 +6,8 @@ const sharedAliases = {
   '@shared': resolve('src/shared'),
   '@database': resolve('../database'),
   '@backend': resolve('../backend'),
-  '@automation': resolve('../automation')
+  '@automation': resolve('../automation'),
+  '@content-intelligence': resolve('../content-intelligence')
 }
 
 export default defineConfig({

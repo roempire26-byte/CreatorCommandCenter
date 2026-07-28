@@ -214,6 +214,12 @@ export const clipCandidateSchema = z.object({
   title: z.string(),
   reason: z.string().optional(),
   status: clipCandidateStatusSchema,
+  hookStrength: z.number().nullable(),
+  emotionalIntensity: z.number().nullable(),
+  contextCompleteness: z.number().nullable(),
+  replayValue: z.number().nullable(),
+  overallScore: z.number().nullable(),
+  feedbackNote: z.string().nullable(),
   exportPath: z.string().nullable(),
   exportFilename: z.string().nullable(),
   exportedAt: z.string().nullable(),
@@ -231,7 +237,8 @@ export type ListClipCandidatesInput = z.infer<typeof listClipCandidatesSchema>
 // analysis/export steps).
 export const updateClipCandidateStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(['approved', 'rejected'])
+  status: z.enum(['approved', 'rejected']),
+  note: z.string().max(500).optional()
 })
 export type UpdateClipCandidateStatusInput = z.infer<typeof updateClipCandidateStatusSchema>
 

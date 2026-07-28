@@ -260,7 +260,7 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
 
   ipcMain.handle(IPC.clipUpdateStatus, (_event, input: unknown) => {
     const parsed = updateClipCandidateStatusSchema.parse(input)
-    const candidate = updateClipCandidateStatus(dbHandle, parsed.id, parsed.status)
+    const candidate = updateClipCandidateStatus(dbHandle, parsed.id, parsed.status, parsed.note)
     if (!candidate) throw new Error('Clip candidate not found')
     logActivity(dbHandle, {
       category: 'clip',

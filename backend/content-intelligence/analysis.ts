@@ -2,13 +2,15 @@ import Anthropic from '@anthropic-ai/sdk'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import type { DbHandle } from '@database/db'
 import { getVod, updateVodStatus } from '@database/repositories/vods'
-import { createClipCandidate } from '@database/repositories/clip-candidates'
+import { createClipCandidate, listFeedbackHistory } from '@database/repositories/clip-candidates'
 import type { Vod } from '@shared/schemas'
 import { buildAnalysisPrompt } from '@content-intelligence/analysis/buildPrompt'
 import {
   clipCandidateSuggestionsSchema,
   type ClipCandidateSuggestion
 } from '@content-intelligence/analysis/clipCandidateSchema'
+import { computeOverallScore } from '@content-intelligence/analysis/computeOverallScore'
+import { buildPreferenceDigest } from '@content-intelligence/analysis/buildPreferenceDigest'
 import { logActivity } from '../activity-log'
 
 // Cheap/fast tier, not the general Opus default — this is a classification-style task
@@ -17,12 +19,16 @@ import { logActivity } from '../activity-log'
 // a heavier transcription option.
 const MODEL = 'claude-haiku-4-5'
 
-async function callClaude(transcript: string, apiKey: string): Promise<ClipCandidateSuggestion[]> {
+async function callClaude(
+  transcript: string,
+  apiKey: string,
+  preferenceDigest?: string
+): Promise<ClipCandidateSuggestion[]> {
   const client = new Anthropic({ apiKey })
   const response = await client.beta.messages.parse({
     model: MODEL,
     max_tokens: 4096,
-    messages: [{ role: 'user', content: buildAnalysisPrompt(transcript) }],
+    messages: [{ role: 'user', content: buildAnalysisPrompt(transcript, preferenceDigest) }],
     output_format: betaZodOutputFormat(clipCandidateSuggestionsSchema)
   })
 
@@ -46,14 +52,32 @@ export async function runAnalysis(handle: DbHandle, vodId: string, apiKey: strin
   if (!vod.transcript) throw new Error('This VOD has no transcript yet.')
 
   try {
-    const candidates = await callClaude(vod.transcript, apiKey)
+    const preferenceDigest = buildPreferenceDigest(
+      listFeedbackHistory(handle).map((c) => ({
+        status: c.status as 'approved' | 'rejected',
+        overallScore: c.overallScore,
+        feedbackNote: c.feedbackNote
+      }))
+    )
+    const candidates = await callClaude(vod.transcript, apiKey, preferenceDigest)
     for (const candidate of candidates) {
+      const overallScore = computeOverallScore(
+        candidate.hookStrength,
+        candidate.emotionalIntensity,
+        candidate.contextCompleteness,
+        candidate.replayValue
+      )
       createClipCandidate(handle, {
         vodId,
         startSeconds: Math.round(candidate.startSeconds),
         endSeconds: Math.round(candidate.endSeconds),
         title: candidate.title,
-        reason: candidate.reason
+        reason: candidate.reason,
+        hookStrength: candidate.hookStrength,
+        emotionalIntensity: candidate.emotionalIntensity,
+        contextCompleteness: candidate.contextCompleteness,
+        replayValue: candidate.replayValue,
+        overallScore
       })
     }
     updateVodStatus(handle, vodId, 'analyzed')

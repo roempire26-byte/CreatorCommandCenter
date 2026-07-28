@@ -99,3 +99,14 @@
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+.candidateScores {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.candidateNote {
+  font-size: 12px;
+  color: var(--text-primary);
+}

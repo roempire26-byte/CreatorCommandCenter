@@ -11,6 +11,10 @@ import type { ClipCandidate, Vod } from '@shared/schemas'
 import formStyles from '@renderer/components/forms/Form.module.css'
 import styles from './Clips.module.css'
 
+function formatScore(value: number | null): string {
+  return value == null ? '—' : `${Math.round(value * 100)}%`
+}
+
 export function Clips(): JSX.Element {
   const [vods, setVods] = useState<Vod[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,6 +31,7 @@ export function Clips(): JSX.Element {
   const [candidatesLoading, setCandidatesLoading] = useState(false)
   const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null)
   const [candidateError, setCandidateError] = useState<string | null>(null)
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({})
   const [exportCandidate, setExportCandidate] = useState<ClipCandidate | null>(null)
   const [exportedCandidate, setExportedCandidate] = useState<ClipCandidate | null>(null)
   const [openFolderError, setOpenFolderError] = useState<string | null>(null)
@@ -111,8 +116,14 @@ export function Clips(): JSX.Element {
     setUpdatingCandidateId(id)
     setCandidateError(null)
     try {
-      const updated = await window.commandCenter.clip.updateStatus(id, status)
+      const note = noteDrafts[id]?.trim() || undefined
+      const updated = await window.commandCenter.clip.updateStatus(id, status, note)
       setCandidates((prev) => prev.map((c) => (c.id === id ? updated : c)))
+      setNoteDrafts((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
       if (status === 'approved') setExportCandidate(updated)
     } catch (err) {
       setCandidateError(err instanceof Error ? err.message : "Couldn't update — try again.")
@@ -231,10 +242,28 @@ export function Clips(): JSX.Element {
                     <span className={styles.candidateMeta}>
                       {formatTimestamp(candidate.startSeconds)}–{formatTimestamp(candidate.endSeconds)}
                     </span>
+                    {candidate.overallScore != null && (
+                      <span className={styles.candidateScores}>
+                        Overall {formatScore(candidate.overallScore)} — hook {formatScore(candidate.hookStrength)},
+                        emotion {formatScore(candidate.emotionalIntensity)}, context{' '}
+                        {formatScore(candidate.contextCompleteness)}, replay {formatScore(candidate.replayValue)}
+                      </span>
+                    )}
+                    {candidate.status !== 'recommended' && candidate.feedbackNote && (
+                      <span className={styles.candidateNote}>Your note: {candidate.feedbackNote}</span>
+                    )}
                   </div>
                   <div className={styles.candidateRight}>
                     {candidate.status === 'recommended' && (
                       <>
+                        <input
+                          type="text"
+                          className={formStyles.input}
+                          placeholder="Optional note (why approve/reject?)"
+                          value={noteDrafts[candidate.id] ?? ''}
+                          onChange={(e) => setNoteDrafts((prev) => ({ ...prev, [candidate.id]: e.target.value }))}
+                          disabled={updatingCandidateId === candidate.id}
+                        />
                         <button
                           type="button"
                           className={buttonClassName('secondary')}

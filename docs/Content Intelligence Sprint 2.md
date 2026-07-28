@@ -135,9 +135,13 @@ reliably persist, so this gets root-caused and fixed first.
 - Approving or rejecting a candidate can optionally record a creator note,
   persisted in `feedback_note` and visible afterward.
 - Running analysis again once prior decided candidates exist produces a
-  prompt that includes a non-empty preference digest — verified by
-  inspecting the actual prompt text sent, not assumed from code review alone.
+  prompt that includes a non-empty preference digest — verified directly
+  against real prompt text built from real feedback-history rows, not
+  assumed from code review alone.
 - No new npm dependencies were added.
+- Outstanding: a live end-to-end Claude call through the running app (the one
+  thing the scratch-fixture harness deliberately didn't exercise, to avoid
+  touching the user's real stored API key — see Tasks 2-5 outcome above).
 
 ## Task 1 outcome (completed 2026-07-28)
 
@@ -171,10 +175,54 @@ Fix shipped:
 No schema change, no new table, no pipeline/status redesign — scoring and
 feedback capture (Tasks 2-5) are untouched.
 
+## Tasks 2-5 outcome (completed 2026-07-28)
+
+Delivered in the sprint doc's own dependency order (2 → 3 → 4 → 5), all additive:
+
+- **Migration 0006** (`database/migrations/0006_clip_scores.sql`) adds
+  `hook_strength`, `emotional_intensity`, `context_completeness`,
+  `replay_value`, `overall_score` (all nullable `REAL`), and `feedback_note`
+  (`TEXT`) to `clip_candidates`.
+- **AI scoring**: `clipCandidateSuggestionSchema` requires the four subscores
+  (Claude's structured-output mode always fills every field, so making them
+  optional would let a lazy value through unnoticed). `overall_score` is a
+  locally computed equal-weighted average (`computeOverallScore.ts`), not
+  trusted from the model.
+- **Feedback capture**: `clip:updateStatus` takes an optional `note`; the
+  repository layer `COALESCE`s it against the existing `feedback_note` so an
+  omitted note on a later call never erases one already recorded. The review
+  UI shows the four subscores + overall score (gracefully blank on
+  pre-migration `null` rows) and an inline optional note field next to
+  Approve/Reject.
+- **Creator preference history**: `listFeedbackHistory` mirrors
+  `listActivityLog`'s recency-capped shape. `buildPreferenceDigest` returns
+  `undefined` on empty history (never splices a fabricated signal into the
+  prompt) and otherwise produces a short approve/reject-ratio-plus-notes
+  summary, spliced into `buildAnalysisPrompt` only when present.
+
+**Verification performed:** `npm run typecheck` and `npm run build` clean.
+A scratch-fixture harness (throwaway SQLite file via `openDatabase`, deleted
+after) exercised every new code path with synthetic data: migration 0006
+applies cleanly, a Claude-shaped response object validates against the
+extended schema, `computeOverallScore` matches the expected weighted value,
+subscores/overall score round-trip through `createClipCandidate`, a
+feedback note persists and survives a later status update that omits it,
+`listFeedbackHistory` correctly filters to decided candidates ordered most-
+recent-first, and `buildPreferenceDigest`/`buildAnalysisPrompt` produce a
+real non-empty digest from that history and splice it into the prompt only
+when present. **Not verified by this pass:** an actual live network call to
+Claude — decrypting the real stored API key outside the packaged app's exact
+`safeStorage`/Local State context didn't reproduce reliably, and repeatedly
+poking at the user's real encrypted credential to debug that felt like the
+wrong tradeoff. The live call itself is low-risk (same `@anthropic-ai/sdk`
+structured-output call Sprint 1 already ships, extended with four more
+schema fields) — recommend a real run through the Clips screen in `npm run dev`
+as the final check.
+
 ## Checklist
 
 - [x] 1 — Investigate + fix the export→DB persistence gap
-- [ ] 2 — Migration 0006 + repository/schema extension
-- [ ] 3 — AI scoring (Claude subscores + local `overall_score`)
-- [ ] 4 — Feedback capture (optional note + score display)
-- [ ] 5 — Creator preference history
+- [x] 2 — Migration 0006 + repository/schema extension
+- [x] 3 — AI scoring (Claude subscores + local `overall_score`)
+- [x] 4 — Feedback capture (optional note + score display)
+- [x] 5 — Creator preference history

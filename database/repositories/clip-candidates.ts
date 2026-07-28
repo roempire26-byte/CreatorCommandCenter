@@ -12,6 +12,12 @@ export interface ClipCandidate {
   title: string
   reason: string | undefined
   status: ClipCandidateStatus
+  hookStrength: number | null
+  emotionalIntensity: number | null
+  contextCompleteness: number | null
+  replayValue: number | null
+  overallScore: number | null
+  feedbackNote: string | null
   exportPath: string | null
   exportFilename: string | null
   exportedAt: string | null
@@ -25,6 +31,11 @@ export interface CreateClipCandidateInput {
   endSeconds: number
   title: string
   reason?: string
+  hookStrength?: number
+  emotionalIntensity?: number
+  contextCompleteness?: number
+  replayValue?: number
+  overallScore?: number
 }
 
 interface ClipCandidateRow {
@@ -35,6 +46,12 @@ interface ClipCandidateRow {
   title: string
   reason: string | null
   status: string
+  hook_strength: number | null
+  emotional_intensity: number | null
+  context_completeness: number | null
+  replay_value: number | null
+  overall_score: number | null
+  feedback_note: string | null
   export_path: string | null
   export_filename: string | null
   exported_at: string | null
@@ -51,6 +68,12 @@ function toClipCandidate(row: ClipCandidateRow): ClipCandidate {
     title: row.title,
     reason: row.reason ?? undefined,
     status: row.status as ClipCandidateStatus,
+    hookStrength: row.hook_strength,
+    emotionalIntensity: row.emotional_intensity,
+    contextCompleteness: row.context_completeness,
+    replayValue: row.replay_value,
+    overallScore: row.overall_score,
+    feedbackNote: row.feedback_note,
     exportPath: row.export_path,
     exportFilename: row.export_filename,
     exportedAt: row.exported_at,
@@ -78,15 +101,44 @@ export function listClipCandidatesForVod(handle: DbHandle, vodId: string): ClipC
   return rows.map(toClipCandidate)
 }
 
+// Most recent decided candidates (approved or rejected), for the preference digest fed back
+// into future Claude analysis calls. Mirrors listActivityLog's recency-capped shape.
+export function listFeedbackHistory(handle: DbHandle, limit = 20): ClipCandidate[] {
+  const rows = query<ClipCandidateRow>(
+    handle.db,
+    `SELECT * FROM clip_candidates WHERE status IN ('approved', 'rejected') ORDER BY updated_at DESC LIMIT ?`,
+    [limit]
+  )
+  return rows.map(toClipCandidate)
+}
+
 export function createClipCandidate(handle: DbHandle, input: CreateClipCandidateInput): ClipCandidate {
   const id = randomUUID()
   const now = new Date().toISOString()
 
   mutate(
     handle.db,
-    `INSERT INTO clip_candidates (id, vod_id, start_seconds, end_seconds, title, reason, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, input.vodId, input.startSeconds, input.endSeconds, input.title, input.reason ?? null, 'recommended', now, now]
+    `INSERT INTO clip_candidates
+       (id, vod_id, start_seconds, end_seconds, title, reason, status,
+        hook_strength, emotional_intensity, context_completeness, replay_value, overall_score,
+        created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      input.vodId,
+      input.startSeconds,
+      input.endSeconds,
+      input.title,
+      input.reason ?? null,
+      'recommended',
+      input.hookStrength ?? null,
+      input.emotionalIntensity ?? null,
+      input.contextCompleteness ?? null,
+      input.replayValue ?? null,
+      input.overallScore ?? null,
+      now,
+      now
+    ]
   )
   saveDatabase(handle)
 
@@ -98,6 +150,12 @@ export function createClipCandidate(handle: DbHandle, input: CreateClipCandidate
     title: input.title,
     reason: input.reason,
     status: 'recommended',
+    hookStrength: input.hookStrength ?? null,
+    emotionalIntensity: input.emotionalIntensity ?? null,
+    contextCompleteness: input.contextCompleteness ?? null,
+    replayValue: input.replayValue ?? null,
+    overallScore: input.overallScore ?? null,
+    feedbackNote: null,
     exportPath: null,
     exportFilename: null,
     exportedAt: null,
@@ -109,16 +167,26 @@ export function createClipCandidate(handle: DbHandle, input: CreateClipCandidate
 export function updateClipCandidateStatus(
   handle: DbHandle,
   id: string,
-  status: ClipCandidateStatus
+  status: ClipCandidateStatus,
+  note?: string
 ): ClipCandidate | undefined {
   const existing = getClipCandidateRow(handle, id)
   if (!existing) return undefined
 
   const updatedAt = new Date().toISOString()
-  mutate(handle.db, 'UPDATE clip_candidates SET status = ?, updated_at = ? WHERE id = ?', [status, updatedAt, id])
+  mutate(
+    handle.db,
+    'UPDATE clip_candidates SET status = ?, feedback_note = COALESCE(?, feedback_note), updated_at = ? WHERE id = ?',
+    [status, note ?? null, updatedAt, id]
+  )
   saveDatabase(handle)
 
-  return toClipCandidate({ ...existing, status, updated_at: updatedAt })
+  return toClipCandidate({
+    ...existing,
+    status,
+    feedback_note: note ?? existing.feedback_note,
+    updated_at: updatedAt
+  })
 }
 
 export interface MarkClipCandidateExportedInput {

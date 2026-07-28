@@ -10,6 +10,7 @@ import {
   createSessionSchema,
   deleteChecklistItemSchema,
   endSessionSchema,
+  exportClipCandidateSchema,
   extractVodAudioSchema,
   listMetricSnapshotsSchema,
   analyzeVodSchema,
@@ -31,12 +32,13 @@ import { createMetricSnapshot, listMetricSnapshots, listMetricSnapshotsForSessio
 import { listAutomationRuns } from '@database/repositories/automation-runs'
 import { listActivityLog } from '@database/repositories/activity-log'
 import { createVod, listVods } from '@database/repositories/vods'
-import { listClipCandidatesForVod, updateClipCandidateStatus } from '@database/repositories/clip-candidates'
+import { getClipCandidate, listClipCandidatesForVod, updateClipCandidateStatus } from '@database/repositories/clip-candidates'
 import { logActivity } from '@backend/activity-log'
 import { runContentReviewCheckWorkflow } from '@backend/automation-runner'
 import { runAudioExtraction } from '@backend/content-intelligence/audio-extraction'
 import { runTranscription } from '@backend/content-intelligence/transcription'
 import { runAnalysis } from '@backend/content-intelligence/analysis'
+import { runClipExport } from '@backend/content-intelligence/export'
 import { connectTwitch } from '@backend/twitch/oauth'
 import type { ObsAdapter } from '@backend/obs/adapter'
 import { loadObsSettings, saveObsSettings } from './obs-settings'
@@ -267,6 +269,18 @@ export function registerIpcHandlers({ dbHandle, obsAdapter, userDataDir }: Regis
       detail: candidate.title
     })
     return candidate
+  })
+
+  ipcMain.handle(IPC.clipExport, async (_event, input: unknown) => {
+    const parsed = exportClipCandidateSchema.parse(input)
+    return runClipExport(dbHandle, parsed.id, join(userDataDir, 'exports'))
+  })
+
+  ipcMain.handle(IPC.clipOpenExportFolder, (_event, input: unknown) => {
+    const parsed = exportClipCandidateSchema.parse(input)
+    const candidate = getClipCandidate(dbHandle, parsed.id)
+    if (!candidate?.exportPath) throw new Error('This clip has not been exported yet.')
+    shell.showItemInFolder(candidate.exportPath)
   })
 
   ipcMain.handle(IPC.claudeGetSettings, () => loadClaudeSettings(userDataDir))

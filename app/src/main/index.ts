@@ -74,25 +74,44 @@ async function bootstrap(dbHandle: DbHandle): Promise<void> {
   })
 }
 
-app.whenReady().then(async () => {
-  // Deny every permission request by default — the app requests none of these today
-  // (no camera/mic/notifications/geolocation/etc.), so this only guards against an
-  // unexpected future request (e.g. from an embedded AI provider SDK) silently falling
-  // through to Electron's default behavior instead of being explicitly refused.
-  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
-    callback(false)
+// sql.js loads the whole SQLite file into memory per process and saveDatabase() overwrites it
+// wholesale on every write, with no locking or merge — two instances open at once will silently
+// clobber each other's work (confirmed: a second instance's single unrelated save erased an
+// entire prior session's VOD/clip rows, even though every step there saved progressively).
+// requestSingleInstanceLock() is the standard Electron guard against that: a second launch
+// attempt quits immediately instead of opening a second in-memory copy of the database.
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
   })
 
-  const dbHandle = await openDatabase(app.getPath('userData'))
-  await bootstrap(dbHandle)
-})
+  app.whenReady().then(async () => {
+    // Deny every permission request by default — the app requests none of these today
+    // (no camera/mic/notifications/geolocation/etc.), so this only guards against an
+    // unexpected future request (e.g. from an embedded AI provider SDK) silently falling
+    // through to Electron's default behavior instead of being explicitly refused.
+    session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+      callback(false)
+    })
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+    const dbHandle = await openDatabase(app.getPath('userData'))
+    await bootstrap(dbHandle)
+  })
 
-app.on('before-quit', () => {
-  obsAdapter?.stop()
-})
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
+
+  app.on('before-quit', () => {
+    obsAdapter?.stop()
+  })
+}

@@ -214,6 +214,9 @@ export const clipCandidateSchema = z.object({
   title: z.string(),
   reason: z.string().optional(),
   status: clipCandidateStatusSchema,
+  exportPath: z.string().nullable(),
+  exportFilename: z.string().nullable(),
+  exportedAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string()
 })
@@ -223,10 +226,14 @@ export const listClipCandidatesSchema = z.object({ vodId: z.string() })
 export type ListClipCandidatesInput = z.infer<typeof listClipCandidatesSchema>
 
 // Review-loop transitions only — approve/reject are the only actions this app builds today,
-// so the boundary deliberately doesn't accept the full ClipCandidateStatus enum ('exported'
-// belongs to a future export flow, 'failed' is set internally by the analysis step).
+// so the boundary deliberately doesn't accept the full ClipCandidateStatus enum ('exported' is
+// set only by exportClipCandidateSchema's dedicated flow, 'failed' is set internally by the
+// analysis/export steps).
 export const updateClipCandidateStatusSchema = z.object({
   id: z.string(),
   status: z.enum(['approved', 'rejected'])
 })
 export type UpdateClipCandidateStatusInput = z.infer<typeof updateClipCandidateStatusSchema>
+
+export const exportClipCandidateSchema = z.object({ id: z.string() })
+export type ExportClipCandidateInput = z.infer<typeof exportClipCandidateSchema>

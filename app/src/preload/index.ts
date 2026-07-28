@@ -83,7 +83,9 @@ const vod = {
 const clip = {
   listForVod: (vodId: string): Promise<ClipCandidate[]> => ipcRenderer.invoke(IPC.clipListForVod, { vodId }),
   updateStatus: (id: string, status: 'approved' | 'rejected'): Promise<ClipCandidate> =>
-    ipcRenderer.invoke(IPC.clipUpdateStatus, { id, status })
+    ipcRenderer.invoke(IPC.clipUpdateStatus, { id, status }),
+  export: (id: string): Promise<ClipCandidate> => ipcRenderer.invoke(IPC.clipExport, { id }),
+  openExportFolder: (id: string): Promise<void> => ipcRenderer.invoke(IPC.clipOpenExportFolder, { id })
 }
 
 const claude = {

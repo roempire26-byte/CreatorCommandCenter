@@ -3,6 +3,7 @@ import { Card } from '@renderer/components/Card'
 import { StatusPill } from '@renderer/components/StatusPill'
 import { EmptyState } from '@renderer/components/EmptyState'
 import { Modal } from '@renderer/components/Modal'
+import { ConfirmDialog } from '@renderer/components/ConfirmDialog'
 import { buttonClassName } from '@renderer/components/Button'
 import { clipCandidateTone, vodStatusLabel, vodTone } from '@renderer/lib/statusTones'
 import { formatDateTime, formatTimestamp } from '@renderer/lib/format'
@@ -26,6 +27,9 @@ export function Clips(): JSX.Element {
   const [candidatesLoading, setCandidatesLoading] = useState(false)
   const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null)
   const [candidateError, setCandidateError] = useState<string | null>(null)
+  const [exportCandidate, setExportCandidate] = useState<ClipCandidate | null>(null)
+  const [exportedCandidate, setExportedCandidate] = useState<ClipCandidate | null>(null)
+  const [openFolderError, setOpenFolderError] = useState<string | null>(null)
 
   useEffect(() => {
     window.commandCenter.vod.list().then((result) => {
@@ -109,10 +113,27 @@ export function Clips(): JSX.Element {
     try {
       const updated = await window.commandCenter.clip.updateStatus(id, status)
       setCandidates((prev) => prev.map((c) => (c.id === id ? updated : c)))
+      if (status === 'approved') setExportCandidate(updated)
     } catch (err) {
       setCandidateError(err instanceof Error ? err.message : "Couldn't update — try again.")
     } finally {
       setUpdatingCandidateId(null)
+    }
+  }
+
+  async function handleExportConfirm(): Promise<void> {
+    if (!exportCandidate) return
+    const updated = await window.commandCenter.clip.export(exportCandidate.id)
+    setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+    setExportedCandidate(updated)
+  }
+
+  async function handleOpenFolder(id: string): Promise<void> {
+    setOpenFolderError(null)
+    try {
+      await window.commandCenter.clip.openExportFolder(id)
+    } catch (err) {
+      setOpenFolderError(err instanceof Error ? err.message : "Couldn't open the folder — try again.")
     }
   }
 
@@ -195,6 +216,7 @@ export function Clips(): JSX.Element {
       {reviewVod && (
         <Modal title={`Clip candidates — ${reviewVod.filename}`} onClose={handleCloseReview}>
           {candidateError && <p className={formStyles.error}>{candidateError}</p>}
+          {openFolderError && <p className={formStyles.error}>{openFolderError}</p>}
           {candidatesLoading ? (
             <p className={styles.hint}>Loading…</p>
           ) : candidates.length === 0 ? (
@@ -231,12 +253,48 @@ export function Clips(): JSX.Element {
                         </button>
                       </>
                     )}
+                    {candidate.status === 'approved' && (
+                      <button type="button" className={buttonClassName('secondary')} onClick={() => setExportCandidate(candidate)}>
+                        Export clip
+                      </button>
+                    )}
+                    {candidate.status === 'exported' && candidate.exportPath && (
+                      <button type="button" className={buttonClassName('quiet')} onClick={() => handleOpenFolder(candidate.id)}>
+                        Open Folder
+                      </button>
+                    )}
                     <StatusPill tone={clipCandidateTone(candidate.status)} label={candidate.status} />
                   </div>
                 </div>
               ))}
             </div>
           )}
+        </Modal>
+      )}
+
+      {exportCandidate && (
+        <ConfirmDialog
+          title="Export clip"
+          message={`Cut "${exportCandidate.title}" (${formatTimestamp(exportCandidate.startSeconds)}–${formatTimestamp(exportCandidate.endSeconds)}) into a local .mp4 file?`}
+          confirmLabel="Export clip"
+          onConfirm={handleExportConfirm}
+          onClose={() => setExportCandidate(null)}
+        />
+      )}
+
+      {exportedCandidate && (
+        <Modal title="Clip exported" onClose={() => setExportedCandidate(null)}>
+          <p className={formStyles.label}>
+            &ldquo;{exportedCandidate.title}&rdquo; was saved as {exportedCandidate.exportFilename}.
+          </p>
+          <div className={formStyles.actions}>
+            <button type="button" className={buttonClassName('quiet')} onClick={() => setExportedCandidate(null)}>
+              Close
+            </button>
+            <button type="button" className={buttonClassName('primary')} onClick={() => handleOpenFolder(exportedCandidate.id)}>
+              Open Folder
+            </button>
+          </div>
         </Modal>
       )}
     </div>

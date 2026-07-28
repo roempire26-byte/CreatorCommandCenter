@@ -33,6 +33,8 @@ export const IPC = {
   vodAnalyze: 'vod:analyze',
   clipListForVod: 'clip:listForVod',
   clipUpdateStatus: 'clip:updateStatus',
+  clipExport: 'clip:export',
+  clipOpenExportFolder: 'clip:openExportFolder',
   claudeGetSettings: 'claude:getSettings',
   claudeSaveKey: 'claude:saveKey',
   claudeClearKey: 'claude:clearKey',
